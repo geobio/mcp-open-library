@@ -31,23 +31,19 @@ npm run build
 
 ### Running the Server
 
-You can run the server directly:
-
-```bash
-npm start
-# or
-./build/index.js
-```
-
-Alternatively, you can use the MCP Inspector to test the server:
+You can use the MCP Inspector to test the server:
 
 ```bash
 npm run inspector
 ```
 
+Access the MCP Inspector and then test the tool e.g.
+
+![alt text](image.png)
+
 ### Using with an MCP Client
 
-This server implements the Model Context Protocol, which means it can be used by any MCP-compatible AI assistant or client. The server exposes the following tool:
+This server implements the Model Context Protocol, which means it can be used by any MCP-compatible AI assistant or client e.g. [Claude Desktop](https://modelcontextprotocol.io/quickstart/user). The server exposes the following tool:
 
 - `get_book_by_title`: Search for book information by title
 
