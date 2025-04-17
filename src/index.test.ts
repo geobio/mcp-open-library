@@ -1,6 +1,6 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import axios from "axios";
-import { OpenLibraryServer } from "./index.js"; // Adjust path if necessary
+import { OpenLibraryServer } from "./index.js";
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
