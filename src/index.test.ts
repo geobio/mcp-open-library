@@ -250,4 +250,46 @@ describe("OpenLibraryServer", () => {
       );
     }
   });
+
+  it("should handle API errors without response status text", async () => {
+    const callToolHandler = mockMcpServer.setRequestHandler.mock.calls.find(
+      (call: [any, (...args: any[]) => Promise<any>]) =>
+        call[0] === CallToolRequestSchema,
+    )?.[1];
+
+    expect(callToolHandler).toBeDefined();
+
+    if (callToolHandler) {
+      const apiError = new Error("Custom Error Message");
+      // Simulate an Axios error structure without response.statusText
+      (apiError as any).isAxiosError = true; // Mark it as an Axios error
+      (apiError as any).response = { status: 503 }; // No statusText
+      (apiError as any).message = "Custom Error Message"; // Ensure message is set
+
+      // Mock isAxiosError to recognize our simulated error object
+      mockedAxios.isAxiosError.mockImplementation((err: any) => !!err.isAxiosError);
+
+      mockedAxios.get.mockRejectedValue(apiError);
+
+      const mockRequest = {
+        params: {
+          name: "get_book_by_title",
+          arguments: { title: "ErrorProneBookNoStatus" },
+        },
+      };
+
+      const result = await callToolHandler(mockRequest as any);
+
+      expect(mockedAxios.get).toHaveBeenCalledWith("/search.json", {
+        params: { title: "ErrorProneBookNoStatus" },
+      });
+      expect(result.isError).toBe(true);
+      expect(result.content).toHaveLength(1);
+      expect(result.content[0].type).toBe("text");
+      // Check that it falls back to error.message
+      expect(result.content[0].text).toBe(
+        "Open Library API error: Custom Error Message",
+      );
+    }
+  });
 });
