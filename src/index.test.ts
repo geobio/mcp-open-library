@@ -97,8 +97,8 @@ describe("OpenLibraryServer", () => {
               first_publish_year: 1937,
               key: "/works/OL45883W",
               edition_count: 120,
+              cover_i: 12345,
             },
-            // Add more docs if needed to test picking the first one
           ],
         },
       };
@@ -125,6 +125,59 @@ describe("OpenLibraryServer", () => {
         first_publish_year: 1937,
         open_library_work_key: "/works/OL45883W",
         edition_count: 120,
+        cover_url: "https://covers.openlibrary.org/b/id/12345-M.jpg", // Add expected cover URL
+      };
+      expect(JSON.parse(result.content[0].text)).toEqual(expectedBookInfo);
+    }
+  });
+
+  it("should handle CallTool request for book without cover", async () => {
+    const callToolHandler = mockMcpServer.setRequestHandler.mock.calls.find(
+      (call: [any, (...args: any[]) => Promise<any>]) =>
+        call[0] === CallToolRequestSchema,
+    )?.[1];
+
+    expect(callToolHandler).toBeDefined();
+
+    if (callToolHandler) {
+      const mockApiResponse = {
+        data: {
+          docs: [
+            {
+              title: "Book Without Cover",
+              author_name: ["Author Name"],
+              first_publish_year: 2024,
+              key: "/works/OL12345W",
+              edition_count: 1,
+              // No cover_i field
+            },
+          ],
+        },
+      };
+      mockedAxios.get.mockResolvedValue(mockApiResponse);
+
+      const mockRequest = {
+        params: {
+          name: "get_book_by_title",
+          arguments: { title: "Book Without Cover" },
+        },
+      };
+
+      const result = await callToolHandler(mockRequest as any);
+
+      expect(mockedAxios.get).toHaveBeenCalledWith("/search.json", {
+        params: { title: "Book Without Cover" },
+      });
+      expect(result.isError).toBeUndefined();
+      expect(result.content).toHaveLength(1);
+      expect(result.content[0].type).toBe("text");
+      const expectedBookInfo = {
+        title: "Book Without Cover",
+        authors: ["Author Name"],
+        first_publish_year: 2024,
+        open_library_work_key: "/works/OL12345W",
+        edition_count: 1,
+        // No cover_url expected
       };
       expect(JSON.parse(result.content[0].text)).toEqual(expectedBookInfo);
     }

@@ -133,6 +133,11 @@ class OpenLibraryServer {
           edition_count: firstDoc.edition_count || 0,
         };
 
+        // Add cover URL if cover_i exists
+        if (firstDoc.cover_i) {
+          bookInfo.cover_url = `https://covers.openlibrary.org/b/id/${firstDoc.cover_i}-M.jpg`;
+        }
+
         return {
           content: [
             {
