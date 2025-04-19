@@ -65,6 +65,10 @@ Example output:
 }
 ```
 
+An example of this tool being used in Claude Desktop can be see here:
+
+<img width="1132" alt="image" src="https://github.com/user-attachments/assets/0865904a-f984-4f7b-a27d-6397ac59d6d2" />
+
 ## Development
 
 ### Project Structure
