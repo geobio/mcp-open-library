@@ -9,6 +9,7 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import axios from "axios";
 import { z } from "zod";
+
 import { BookInfo, OpenLibrarySearchResponse } from "./types.js";
 
 // Zod schema for the tool arguments

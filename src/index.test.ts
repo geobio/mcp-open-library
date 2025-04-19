@@ -1,14 +1,16 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import axios from "axios";
-import { OpenLibraryServer } from "./index.js";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
   McpError,
   ErrorCode,
 } from "@modelcontextprotocol/sdk/types.js";
-import { Server } from "@modelcontextprotocol/sdk/server/index.js";
+import axios from "axios";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { Mock } from "vitest";
 
+import { OpenLibraryServer } from "./index.js";
 // Mock the MCP Server and its methods
 vi.mock("@modelcontextprotocol/sdk/server/index.js", () => {
   const mockServer = {
@@ -26,9 +28,8 @@ vi.mock("@modelcontextprotocol/sdk/server/index.js", () => {
 vi.mock("axios");
 const mockedAxios = vi.mocked(axios, true); // Use true for deep mocking
 
-import { Mock } from "vitest";
-
 describe("OpenLibraryServer", () => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   let serverInstance: OpenLibraryServer;
   // Explicitly type the mock server instance based on the mocked structure
   let mockMcpServer: {
@@ -267,7 +268,9 @@ describe("OpenLibraryServer", () => {
       (apiError as any).message = "Custom Error Message"; // Ensure message is set
 
       // Mock isAxiosError to recognize our simulated error object
-      mockedAxios.isAxiosError.mockImplementation((err: any) => !!err.isAxiosError);
+      mockedAxios.isAxiosError.mockImplementation(
+        (err: any) => !!err.isAxiosError,
+      );
 
       mockedAxios.get.mockRejectedValue(apiError);
 
