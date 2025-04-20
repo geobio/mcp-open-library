@@ -2,6 +2,10 @@
 
 A Model Context Protocol (MCP) server for the Open Library API that enables AI assistants to search for book information.
 
+<a href="https://glama.ai/mcp/servers/@8enSmith/mcp-open-library">
+  <img width="380" height="200" src="https://glama.ai/mcp/servers/@8enSmith/mcp-open-library/badge" alt="mcp-open-library MCP server" />
+</a>
+
 ## Overview
 
 This project implements an MCP server that provides a tool for AI assistants to search the [Open Library](https://openlibrary.org/) for book information by title. The server returns structured data about the most relevant book match, including title, authors, publication year, and other metadata.
