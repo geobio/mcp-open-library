@@ -73,6 +73,21 @@ An example of this tool being used in Claude Desktop can be see here:
 
 <img width="1132" alt="image" src="https://github.com/user-attachments/assets/0865904a-f984-4f7b-a27d-6397ac59d6d2" />
 
+### Docker
+
+You can test this MCP server using Docker. To do this first run:
+
+```bash
+docker build -t mcp-open-library .
+docker run -p 8080:8080 mcp-open-library              
+```
+
+You can then test the server running within Docker via the inspector e.g.
+
+```bash
+pnpm run inspector http://localhost:8080
+```
+
 ## Development
 
 ### Project Structure
