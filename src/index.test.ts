@@ -125,9 +125,9 @@ describe("OpenLibraryServer", () => {
         first_publish_year: 1937,
         open_library_work_key: "/works/OL45883W",
         edition_count: 120,
-        cover_url: "https://covers.openlibrary.org/b/id/12345-M.jpg", // Add expected cover URL
+        cover_url: "https://covers.openlibrary.org/b/id/12345-M.jpg",
       };
-      expect(JSON.parse(result.content[0].text)).toEqual(expectedBookInfo);
+      expect(JSON.parse(result.content[0].text)).toEqual([expectedBookInfo]);
     }
   });
 
@@ -179,7 +179,7 @@ describe("OpenLibraryServer", () => {
         edition_count: 1,
         // No cover_url expected
       };
-      expect(JSON.parse(result.content[0].text)).toEqual(expectedBookInfo);
+      expect(JSON.parse(result.content[0].text)).toEqual([expectedBookInfo]);
     }
   });
 
@@ -346,6 +346,98 @@ describe("OpenLibraryServer", () => {
       expect(result.content[0].text).toBe(
         "Open Library API error: Custom Error Message",
       );
+    }
+  });
+
+  it("should handle multiple books with the same title", async () => {
+    const callToolHandler = mockMcpServer.setRequestHandler.mock.calls.find(
+      (call: [any, (...args: any[]) => Promise<any>]) =>
+        call[0] === CallToolRequestSchema,
+    )?.[1];
+
+    expect(callToolHandler).toBeDefined();
+
+    if (callToolHandler) {
+      // Mock a response with multiple books that have the same title
+      const mockApiResponse = {
+        data: {
+          docs: [
+            {
+              title: "Pride and Prejudice",
+              author_name: ["Jane Austen"],
+              first_publish_year: 1813,
+              key: "/works/OL12345W",
+              edition_count: 200,
+              cover_i: 12345,
+            },
+            {
+              title: "Pride and Prejudice",
+              author_name: ["Jane Austen", "Another Editor"],
+              first_publish_year: 1900,
+              key: "/works/OL67890W",
+              edition_count: 50,
+              cover_i: 67890,
+            },
+            {
+              title: "Pride and Prejudice",
+              author_name: ["Jane Austen", "Illustrated Edition"],
+              first_publish_year: 2000,
+              key: "/works/OL54321W",
+              edition_count: 10,
+              // No cover for this edition
+            },
+          ],
+        },
+      };
+      mockedAxios.get.mockResolvedValue(mockApiResponse);
+
+      const mockRequest = {
+        params: {
+          name: "get_book_by_title",
+          arguments: { title: "Pride and Prejudice" },
+        },
+      };
+
+      const result = await callToolHandler(mockRequest as any);
+
+      expect(mockedAxios.get).toHaveBeenCalledWith("/search.json", {
+        params: { title: "Pride and Prejudice" },
+      });
+      expect(result.isError).toBeUndefined();
+      expect(result.content).toHaveLength(1);
+      expect(result.content[0].type).toBe("text");
+
+      const expectedBooks = [
+        {
+          title: "Pride and Prejudice",
+          authors: ["Jane Austen"],
+          first_publish_year: 1813,
+          open_library_work_key: "/works/OL12345W",
+          edition_count: 200,
+          cover_url: "https://covers.openlibrary.org/b/id/12345-M.jpg",
+        },
+        {
+          title: "Pride and Prejudice",
+          authors: ["Jane Austen", "Another Editor"],
+          first_publish_year: 1900,
+          open_library_work_key: "/works/OL67890W",
+          edition_count: 50,
+          cover_url: "https://covers.openlibrary.org/b/id/67890-M.jpg",
+        },
+        {
+          title: "Pride and Prejudice",
+          authors: ["Jane Austen", "Illustrated Edition"],
+          first_publish_year: 2000,
+          open_library_work_key: "/works/OL54321W",
+          edition_count: 10,
+          // No cover_url for this edition
+        },
+      ];
+
+      // Check that all books are returned in the array
+      expect(JSON.parse(result.content[0].text)).toEqual(expectedBooks);
+      // Verify array length matches expected number of books
+      expect(JSON.parse(result.content[0].text).length).toBe(3);
     }
   });
 });
