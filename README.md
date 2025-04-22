@@ -79,7 +79,7 @@ You can test this MCP server using Docker. To do this first run:
 
 ```bash
 docker build -t mcp-open-library .
-docker run -p 8080:8080 mcp-open-library              
+docker run -p 8080:8080 mcp-open-library
 ```
 
 You can then test the server running within Docker via the inspector e.g.
