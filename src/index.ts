@@ -61,9 +61,7 @@ class OpenLibraryServer {
     });
   }
 
-  private async _handleGetBookByTitle(
-    args: unknown,
-  ): Promise<CallToolResult> {
+  private async _handleGetBookByTitle(args: unknown): Promise<CallToolResult> {
     // Validate arguments using Zod
     const parseResult = GetBookByTitleArgsSchema.safeParse(args);
 
@@ -156,9 +154,7 @@ class OpenLibraryServer {
     }
   }
 
-  private async _handleGetAuthorInfo(
-    args: unknown,
-  ): Promise<CallToolResult> {
+  private async _handleGetAuthorInfo(args: unknown): Promise<CallToolResult> {
     // Validate arguments using Zod
     const parseResult = GetAuthorInfoArgsSchema.safeParse(args);
 
