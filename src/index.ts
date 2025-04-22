@@ -3,6 +3,7 @@ import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import {
   CallToolRequestSchema,
+  CallToolResult,
   ErrorCode,
   ListToolsRequestSchema,
   McpError,
@@ -10,11 +11,21 @@ import {
 import axios from "axios";
 import { z } from "zod";
 
-import { BookInfo, OpenLibrarySearchResponse } from "./types.js";
+import {
+  BookInfo,
+  OpenLibrarySearchResponse,
+  AuthorInfo, // Add AuthorInfo
+  OpenLibraryAuthorSearchResponse, // Add OpenLibraryAuthorSearchResponse
+} from "./types.js";
 
-// Zod schema for the tool arguments
+// Zod schema for the get_book_by_title tool arguments
 const GetBookByTitleArgsSchema = z.object({
   title: z.string().min(1, { message: "Title cannot be empty" }),
+});
+
+// Zod schema for the get_author_info tool arguments
+const GetAuthorInfoArgsSchema = z.object({
+  name: z.string().min(1, { message: "Author name cannot be empty" }),
 });
 
 class OpenLibraryServer {
@@ -50,6 +61,183 @@ class OpenLibraryServer {
     });
   }
 
+  private async _handleGetBookByTitle(
+    args: unknown,
+  ): Promise<CallToolResult> {
+    // Validate arguments using Zod
+    const parseResult = GetBookByTitleArgsSchema.safeParse(args);
+
+    if (!parseResult.success) {
+      // Combine Zod error messages into a single string
+      const errorMessages = parseResult.error.errors
+        .map((e) => `${e.path.join(".")}: ${e.message}`)
+        .join(", ");
+      throw new McpError(
+        ErrorCode.InvalidParams,
+        `Invalid arguments for get_book_by_title: ${errorMessages}`,
+      );
+    }
+
+    // Use the validated data
+    const bookTitle = parseResult.data.title;
+
+    try {
+      const response = await this.axiosInstance.get<OpenLibrarySearchResponse>(
+        "/search.json",
+        {
+          params: { title: bookTitle },
+        },
+      );
+
+      if (
+        !response.data ||
+        !response.data.docs ||
+        response.data.docs.length === 0
+      ) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: `No books found matching title: "${bookTitle}"`,
+            },
+          ],
+        };
+      }
+
+      // Process all matching books instead of just the first one
+      const bookResults = Array.isArray(response.data.docs)
+        ? response.data.docs.map((doc) => {
+            const bookInfo: BookInfo = {
+              title: doc.title,
+              authors: doc.author_name || [],
+              first_publish_year: doc.first_publish_year || null,
+              open_library_work_key: doc.key,
+              edition_count: doc.edition_count || 0,
+            };
+
+            // Add cover URL if cover_i exists
+            if (doc.cover_i) {
+              bookInfo.cover_url = `https://covers.openlibrary.org/b/id/${doc.cover_i}-M.jpg`;
+            }
+
+            return bookInfo;
+          })
+        : [];
+
+      return {
+        content: [
+          {
+            type: "text",
+            // Return the formatted JSON array as a string
+            text: JSON.stringify(bookResults, null, 2),
+          },
+        ],
+      };
+    } catch (error) {
+      let errorMessage = "Failed to fetch book data from Open Library.";
+      if (axios.isAxiosError(error)) {
+        errorMessage = `Open Library API error: ${
+          error.response?.statusText ?? error.message
+        }`;
+      } else if (error instanceof Error) {
+        errorMessage = `Error processing request: ${error.message}`;
+      }
+      console.error("Error in get_book_by_title:", error);
+      // Return an error response to the MCP client
+      return {
+        content: [
+          {
+            type: "text",
+            text: errorMessage,
+          },
+        ],
+        isError: true,
+      };
+    }
+  }
+
+  private async _handleGetAuthorInfo(
+    args: unknown,
+  ): Promise<CallToolResult> {
+    // Validate arguments using Zod
+    const parseResult = GetAuthorInfoArgsSchema.safeParse(args);
+
+    if (!parseResult.success) {
+      const errorMessages = parseResult.error.errors
+        .map((e) => `${e.path.join(".")}: ${e.message}`)
+        .join(", ");
+      throw new McpError(
+        ErrorCode.InvalidParams,
+        `Invalid arguments for get_author_info: ${errorMessages}`,
+      );
+    }
+
+    const authorName = parseResult.data.name;
+
+    try {
+      const response =
+        await this.axiosInstance.get<OpenLibraryAuthorSearchResponse>(
+          "/search/authors.json", // Use the author search endpoint
+          {
+            params: { q: authorName }, // Use 'q' parameter for author search
+          },
+        );
+
+      if (
+        !response.data ||
+        !response.data.docs ||
+        response.data.docs.length === 0
+      ) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: `No authors found matching name: "${authorName}"`,
+            },
+          ],
+        };
+      }
+
+      // Process matching authors
+      const authorResults: AuthorInfo[] = response.data.docs.map((doc) => ({
+        key: doc.key,
+        name: doc.name,
+        alternate_names: doc.alternate_names,
+        birth_date: doc.birth_date,
+        top_work: doc.top_work,
+        work_count: doc.work_count,
+      }));
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(authorResults, null, 2),
+          },
+        ],
+      };
+    } catch (error) {
+      let errorMessage = "Failed to fetch author data from Open Library.";
+      if (axios.isAxiosError(error)) {
+        errorMessage = `Open Library API error: ${
+          error.response?.statusText ?? error.message
+        }`;
+      } else if (error instanceof Error) {
+        errorMessage = `Error processing request: ${error.message}`;
+      }
+      console.error("Error in get_author_info:", error);
+      return {
+        content: [
+          {
+            type: "text",
+            text: errorMessage,
+          },
+        ],
+        isError: true,
+      };
+    }
+  }
+
   private setupToolHandlers() {
     // ListTools handler
     this.server.setRequestHandler(ListToolsRequestSchema, async () => ({
@@ -68,110 +256,35 @@ class OpenLibraryServer {
             required: ["title"],
           },
         },
+        {
+          name: "get_author_info", // Add new tool definition
+          description: "Search for author information on Open Library.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              name: {
+                type: "string",
+                description: "The name of the author to search for.",
+              },
+            },
+            required: ["name"],
+          },
+        },
       ],
     }));
 
     // CallTool handler
     this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
-      if (request.params.name !== "get_book_by_title") {
-        throw new McpError(
-          ErrorCode.MethodNotFound,
-          `Unknown tool: ${request.params.name}`,
-        );
-      }
-
-      // Validate arguments using Zod
-      const parseResult = GetBookByTitleArgsSchema.safeParse(
-        request.params.arguments,
-      );
-
-      if (!parseResult.success) {
-        // Combine Zod error messages into a single string
-        const errorMessages = parseResult.error.errors
-          .map((e) => `${e.path.join(".")}: ${e.message}`)
-          .join(", ");
-        throw new McpError(
-          ErrorCode.InvalidParams,
-          `Invalid arguments: ${errorMessages}`,
-        );
-      }
-
-      // Use the validated data
-      const bookTitle = parseResult.data.title;
-
-      try {
-        const response =
-          await this.axiosInstance.get<OpenLibrarySearchResponse>(
-            "/search.json",
-            {
-              params: { title: bookTitle },
-            },
+      switch (request.params.name) {
+        case "get_book_by_title":
+          return this._handleGetBookByTitle(request.params.arguments);
+        case "get_author_info":
+          return this._handleGetAuthorInfo(request.params.arguments);
+        default:
+          throw new McpError(
+            ErrorCode.MethodNotFound,
+            `Unknown tool: ${request.params.name}`,
           );
-
-        if (
-          !response.data ||
-          !response.data.docs ||
-          response.data.docs.length === 0
-        ) {
-          return {
-            content: [
-              {
-                type: "text",
-                text: `No books found matching title: "${bookTitle}"`,
-              },
-            ],
-          };
-        }
-
-        // Process all matching books instead of just the first one
-        const bookResults = Array.isArray(response.data.docs)
-          ? response.data.docs.map((doc) => {
-              const bookInfo: BookInfo = {
-                title: doc.title,
-                authors: doc.author_name || [],
-                first_publish_year: doc.first_publish_year || null,
-                open_library_work_key: doc.key,
-                edition_count: doc.edition_count || 0,
-              };
-
-              // Add cover URL if cover_i exists
-              if (doc.cover_i) {
-                bookInfo.cover_url = `https://covers.openlibrary.org/b/id/${doc.cover_i}-M.jpg`;
-              }
-
-              return bookInfo;
-            })
-          : [];
-
-        return {
-          content: [
-            {
-              type: "text",
-              // Return the formatted JSON array as a string
-              text: JSON.stringify(bookResults, null, 2),
-            },
-          ],
-        };
-      } catch (error) {
-        let errorMessage = "Failed to fetch book data from Open Library.";
-        if (axios.isAxiosError(error)) {
-          errorMessage = `Open Library API error: ${
-            error.response?.statusText ?? error.message
-          }`;
-        } else if (error instanceof Error) {
-          errorMessage = `Error processing request: ${error.message}`;
-        }
-        console.error("Error in get_book_by_title:", error);
-        // Return an error response to the MCP client
-        return {
-          content: [
-            {
-              type: "text",
-              text: errorMessage,
-            },
-          ],
-          isError: true,
-        };
       }
     });
   }
