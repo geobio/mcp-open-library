@@ -124,7 +124,7 @@ class OpenLibraryServer {
         }
 
         // Process all matching books instead of just the first one
-        const bookResults = response.data.docs.map((doc) => {
+        const bookResults = Array.isArray(response.data.docs) ? response.data.docs.map((doc) => {
           const bookInfo: BookInfo = {
             title: doc.title,
             authors: doc.author_name || [],
@@ -139,7 +139,7 @@ class OpenLibraryServer {
           }
 
           return bookInfo;
-        });
+        }) : [];
 
         return {
           content: [
