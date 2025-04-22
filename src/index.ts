@@ -124,22 +124,24 @@ class OpenLibraryServer {
         }
 
         // Process all matching books instead of just the first one
-        const bookResults = Array.isArray(response.data.docs) ? response.data.docs.map((doc) => {
-          const bookInfo: BookInfo = {
-            title: doc.title,
-            authors: doc.author_name || [],
-            first_publish_year: doc.first_publish_year || null,
-            open_library_work_key: doc.key,
-            edition_count: doc.edition_count || 0,
-          };
+        const bookResults = Array.isArray(response.data.docs)
+          ? response.data.docs.map((doc) => {
+              const bookInfo: BookInfo = {
+                title: doc.title,
+                authors: doc.author_name || [],
+                first_publish_year: doc.first_publish_year || null,
+                open_library_work_key: doc.key,
+                edition_count: doc.edition_count || 0,
+              };
 
-          // Add cover URL if cover_i exists
-          if (doc.cover_i) {
-            bookInfo.cover_url = `https://covers.openlibrary.org/b/id/${doc.cover_i}-M.jpg`;
-          }
+              // Add cover URL if cover_i exists
+              if (doc.cover_i) {
+                bookInfo.cover_url = `https://covers.openlibrary.org/b/id/${doc.cover_i}-M.jpg`;
+              }
 
-          return bookInfo;
-        }) : [];
+              return bookInfo;
+            })
+          : [];
 
         return {
           content: [
