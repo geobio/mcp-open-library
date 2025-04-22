@@ -8,12 +8,13 @@ A Model Context Protocol (MCP) server for the Open Library API that enables AI a
 
 ## Overview
 
-This project implements an MCP server that provides a tool for AI assistants to search the [Open Library](https://openlibrary.org/) for book information by title. The server returns structured data about the most relevant book match, including title, authors, publication year, and other metadata.
+This project implements an MCP server that provides a tool for AI assistants to search the [Open Library](https://openlibrary.org/) for book information by title and author information by name. The server returns structured data about the most relevant matches, including title, authors, publication year, and other metadata for books, and name, birth date, top work, etc., for authors.
 
 ## Features
 
 - **Book Search by Title**: Search for books using their title and get detailed information
-- **Structured Response Format**: Returns book information in a consistent JSON structure
+- **Author Search by Name**: Search for authors using their name and get relevant details
+- **Structured Response Format**: Returns book and author information in a consistent JSON structure
 - **Error Handling**: Proper validation and error reporting
 - **Testing**: Comprehensive test coverage with Vitest
 
@@ -47,26 +48,55 @@ Access the MCP Inspector and then test the tool e.g.
 
 ### Using with an MCP Client
 
-This server implements the Model Context Protocol, which means it can be used by any MCP-compatible AI assistant or client e.g. [Claude Desktop](https://modelcontextprotocol.io/quickstart/user). The server exposes the following tool:
+This server implements the Model Context Protocol, which means it can be used by any MCP-compatible AI assistant or client e.g. [Claude Desktop](https://modelcontextprotocol.io/quickstart/user). The server exposes the following tools:
 
 - `get_book_by_title`: Search for book information by title
+- `get_author_info`: Search for author information by name
 
-Example input:
+**Example `get_book_by_title` input:**
 ```json
 {
   "title": "The Hobbit"
 }
 ```
 
-Example output:
+**Example `get_book_by_title` output:**
+```json
+[
+  {
+    "title": "The Hobbit",
+    "authors": [
+      "J. R. R. Tolkien"
+    ],
+    "first_publish_year": 1937,
+    "open_library_work_key": "/works/OL45883W",
+    "edition_count": 120,
+    "cover_url": "https://covers.openlibrary.org/b/id/10581294-M.jpg"
+  }
+]
+```
+
+**Example `get_author_info` input:**
 ```json
 {
-  "title": "The Hobbit",
-  "authors": ["J.R.R. Tolkien"],
-  "first_publish_year": 1937,
-  "open_library_work_key": "/works/OL45883W",
-  "edition_count": 120
+  "name": "J.R.R. Tolkien"
 }
+```
+
+**Example `get_author_info` output:**
+```json
+[
+  {
+    "key": "OL26320A",
+    "name": "J. R. R. Tolkien",
+    "alternate_names": [
+      "John Ronald Reuel Tolkien"
+    ],
+    "birth_date": "3 January 1892",
+    "top_work": "The Hobbit",
+    "work_count": 648
+  }
+]
 ```
 
 An example of this tool being used in Claude Desktop can be see here:
