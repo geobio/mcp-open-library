@@ -407,14 +407,14 @@ class OpenLibraryServer {
           // Add the new tool definition
           name: "get_author_photo",
           description:
-            "Get the URL for an author's photo using their Open Library Author ID (OLID, e.g., OL23919A).",
+            "Get the URL for an author's photo using their Open Library Author ID (OLID, e.g. OL23919A).",
           inputSchema: {
             type: "object",
             properties: {
               olid: {
                 type: "string",
                 description:
-                  "The Open Library Author ID (OLID) for the author (e.g., OL23919A).",
+                  "The Open Library Author ID (OLID) for the author (e.g. OL23919A).",
               },
             },
             required: ["olid"],
@@ -424,21 +424,20 @@ class OpenLibraryServer {
     }));
 
     this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
-      switch (request.params.name) {
+      const { name, arguments: args } = request.params;
+
+      switch (name) {
         case "get_book_by_title":
-          return this._handleGetBookByTitle(request.params.arguments);
+          return this._handleGetBookByTitle(args);
         case "get_authors_by_name":
-          return this._handleGetAuthorsByName(request.params.arguments);
+          return this._handleGetAuthorsByName(args);
         case "get_author_info":
-          return this._handleGetAuthorInfo(request.params.arguments);
+          return this._handleGetAuthorInfo(args);
         // Add case for the new tool
         case "get_author_photo":
-          return this._handleGetAuthorPhoto(request.params.arguments);
+          return this._handleGetAuthorPhoto(args);
         default:
-          throw new McpError(
-            ErrorCode.MethodNotFound,
-            `Unknown tool: ${request.params.name}`,
-          );
+          throw new McpError(ErrorCode.MethodNotFound, `Unknown tool: ${name}`);
       }
     });
   }
