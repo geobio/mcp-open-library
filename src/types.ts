@@ -62,7 +62,11 @@ export interface DetailedAuthorInfo {
   wikipedia?: string;
   key: string;
   remote_ids?: {
+    amazon?: string;
+    librarything?: string;
     viaf?: string;
+    goodreads?: string;
+    storygraph?: string;
     wikidata?: string;
     isni?: string;
   };
