@@ -63,7 +63,7 @@ describe("OpenLibraryServer", () => {
 
       if (listToolsHandler) {
         const result = await listToolsHandler({} as any); // Call the handler
-        expect(result.tools).toHaveLength(2);
+        expect(result.tools).toHaveLength(3);
         expect(result.tools[0].name).toBe("get_book_by_title");
         expect(result.tools[0].description).toBeDefined();
         expect(result.tools[0].inputSchema).toEqual({
@@ -344,8 +344,8 @@ describe("OpenLibraryServer", () => {
     });
   });
 
-  describe("get_author_info tool", () => {
-    it("should correctly list the get_author_info tool", async () => {
+  describe("get_authors_by_name tool", () => {
+    it("should correctly list the get_authors_by_name tool", async () => {
       const listToolsHandler = mockMcpServer.setRequestHandler.mock.calls.find(
         (call: [any, (...args: any[]) => Promise<any>]) =>
           call[0] === ListToolsRequestSchema,
@@ -355,9 +355,9 @@ describe("OpenLibraryServer", () => {
 
       if (listToolsHandler) {
         const result = await listToolsHandler({} as any);
-        expect(result.tools).toHaveLength(2); // Now expects 2 tools
+        expect(result.tools).toHaveLength(3); // Now expects 2 tools
         const authorTool = result.tools.find(
-          (tool: any) => tool.name === "get_author_info",
+          (tool: any) => tool.name === "get_authors_by_name",
         );
         expect(authorTool).toBeDefined();
         expect(authorTool.description).toBeDefined();
@@ -374,7 +374,7 @@ describe("OpenLibraryServer", () => {
       }
     });
 
-    it("should handle CallTool request for get_author_info successfully", async () => {
+    it("should handle CallTool request for get_authors_by_name successfully", async () => {
       const callToolHandler = mockMcpServer.setRequestHandler.mock.calls.find(
         (call: [any, (...args: any[]) => Promise<any>]) =>
           call[0] === CallToolRequestSchema,
@@ -401,7 +401,7 @@ describe("OpenLibraryServer", () => {
 
         const mockRequest = {
           params: {
-            name: "get_author_info",
+            name: "get_authors_by_name",
             arguments: { name: "J. R. R. Tolkien" },
           },
         };
@@ -446,7 +446,7 @@ describe("OpenLibraryServer", () => {
 
         const mockRequest = {
           params: {
-            name: "get_author_info",
+            name: "get_authors_by_name",
             arguments: { name: "NonExistentAuthor123" },
           },
         };
@@ -476,7 +476,7 @@ describe("OpenLibraryServer", () => {
       if (callToolHandler) {
         const mockRequest = {
           params: {
-            name: "get_author_info",
+            name: "get_authors_by_name",
             arguments: {}, // Missing name
           },
         };
@@ -484,14 +484,14 @@ describe("OpenLibraryServer", () => {
         await expect(callToolHandler(mockRequest as any)).rejects.toThrow(
           new McpError(
             ErrorCode.InvalidParams,
-            "Invalid arguments for get_author_info: name: Required",
+            "Invalid arguments for get_authors_by_name: name: Required",
           ),
         );
         expect(mockedAxios.get).not.toHaveBeenCalled();
       }
     });
 
-    it("should handle API errors during CallTool request for get_author_info", async () => {
+    it("should handle API errors during CallTool request for get_authors_by_name", async () => {
       const callToolHandler = mockMcpServer.setRequestHandler.mock.calls.find(
         (call: [any, (...args: any[]) => Promise<any>]) =>
           call[0] === CallToolRequestSchema,
@@ -507,7 +507,7 @@ describe("OpenLibraryServer", () => {
 
         const mockRequest = {
           params: {
-            name: "get_author_info",
+            name: "get_authors_by_name",
             arguments: { name: "ErrorProneAuthor" },
           },
         };
@@ -526,7 +526,7 @@ describe("OpenLibraryServer", () => {
       }
     });
 
-    it("should handle API errors without response status text for get_author_info", async () => {
+    it("should handle API errors without response status text for get_authors_by_name", async () => {
       const callToolHandler = mockMcpServer.setRequestHandler.mock.calls.find(
         (call: [any, (...args: any[]) => Promise<any>]) =>
           call[0] === CallToolRequestSchema,
@@ -547,7 +547,7 @@ describe("OpenLibraryServer", () => {
 
         const mockRequest = {
           params: {
-            name: "get_author_info",
+            name: "get_authors_by_name",
             arguments: { name: "ErrorAuthorNoStatus" },
           },
         };
@@ -598,7 +598,7 @@ describe("OpenLibraryServer", () => {
 
         const mockRequest = {
           params: {
-            name: "get_author_info",
+            name: "get_authors_by_name",
             arguments: { name: "Smith" },
           },
         };
@@ -631,6 +631,241 @@ describe("OpenLibraryServer", () => {
         ];
         expect(JSON.parse(result.content[0].text)).toEqual(expectedAuthors);
         expect(JSON.parse(result.content[0].text).length).toBe(2);
+      }
+    });
+  });
+
+  describe("get_author_info tool", () => {
+    it("should correctly list the get_author_info tool", async () => {
+      const listToolsHandler = mockMcpServer.setRequestHandler.mock.calls.find(
+        (call: [any, (...args: any[]) => Promise<any>]) =>
+          call[0] === ListToolsRequestSchema,
+      )?.[1];
+
+      expect(listToolsHandler).toBeDefined();
+
+      if (listToolsHandler) {
+        const result = await listToolsHandler({} as any);
+        expect(result.tools).toHaveLength(3);
+        const authorInfoTool = result.tools.find(
+          (tool: any) => tool.name === "get_author_info",
+        );
+        expect(authorInfoTool).toBeDefined();
+        expect(authorInfoTool.description).toBeDefined();
+        expect(authorInfoTool.inputSchema).toEqual({
+          type: "object",
+          properties: {
+            author_key: {
+              type: "string",
+              description:
+                "The Open Library key for the author (e.g., OL23919A).",
+            },
+          },
+          required: ["author_key"],
+        });
+      }
+    });
+
+    it("should handle CallTool request for get_author_info successfully", async () => {
+      const callToolHandler = mockMcpServer.setRequestHandler.mock.calls.find(
+        (call: [any, (...args: any[]) => Promise<any>]) =>
+          call[0] === CallToolRequestSchema,
+      )?.[1];
+
+      expect(callToolHandler).toBeDefined();
+
+      if (callToolHandler) {
+        const mockApiResponse = {
+          data: {
+            key: "/authors/OL23919A",
+            name: "J. R. R. Tolkien",
+            birth_date: "3 January 1892",
+            death_date: "2 September 1973",
+            bio: "British writer, poet, philologist, and university professor",
+            photos: [12345],
+            works_count: 150,
+          },
+        };
+        mockedAxios.get.mockResolvedValue(mockApiResponse);
+
+        const mockRequest = {
+          params: {
+            name: "get_author_info",
+            arguments: { author_key: "OL23919A" },
+          },
+        };
+
+        const result = await callToolHandler(mockRequest as any);
+
+        expect(mockedAxios.get).toHaveBeenCalledWith("/authors/OL23919A.json");
+        expect(result.isError).toBeUndefined();
+        expect(result.content).toHaveLength(1);
+        expect(result.content[0].type).toBe("text");
+        expect(JSON.parse(result.content[0].text)).toEqual(
+          mockApiResponse.data,
+        );
+      }
+    });
+
+    it("should handle bio object formatting", async () => {
+      const callToolHandler = mockMcpServer.setRequestHandler.mock.calls.find(
+        (call: [any, (...args: any[]) => Promise<any>]) =>
+          call[0] === CallToolRequestSchema,
+      )?.[1];
+
+      expect(callToolHandler).toBeDefined();
+
+      if (callToolHandler) {
+        const mockApiResponse = {
+          data: {
+            key: "/authors/OL23919A",
+            name: "J. R. R. Tolkien",
+            birth_date: "3 January 1892",
+            bio: {
+              type: "/type/text",
+              value:
+                "British writer, poet, philologist, and university professor who created Middle-earth.",
+            },
+          },
+        };
+        mockedAxios.get.mockResolvedValue(mockApiResponse);
+
+        const mockRequest = {
+          params: {
+            name: "get_author_info",
+            arguments: { author_key: "OL23919A" },
+          },
+        };
+
+        const result = await callToolHandler(mockRequest as any);
+
+        expect(mockedAxios.get).toHaveBeenCalledWith("/authors/OL23919A.json");
+        expect(result.isError).toBeUndefined();
+
+        const expectedResult = {
+          ...mockApiResponse.data,
+          bio: "British writer, poet, philologist, and university professor who created Middle-earth.",
+        };
+
+        expect(JSON.parse(result.content[0].text)).toEqual(expectedResult);
+      }
+    });
+
+    it("should handle CallTool request when author is not found", async () => {
+      const callToolHandler = mockMcpServer.setRequestHandler.mock.calls.find(
+        (call: [any, (...args: any[]) => Promise<any>]) =>
+          call[0] === CallToolRequestSchema,
+      )?.[1];
+
+      expect(callToolHandler).toBeDefined();
+
+      if (callToolHandler) {
+        const notFoundError = new Error("Not Found");
+        (notFoundError as any).isAxiosError = true;
+        (notFoundError as any).response = { status: 404 };
+        mockedAxios.get.mockRejectedValue(notFoundError);
+
+        const mockRequest = {
+          params: {
+            name: "get_author_info",
+            arguments: { author_key: "OL999999A" },
+          },
+        };
+
+        const result = await callToolHandler(mockRequest as any);
+
+        expect(mockedAxios.get).toHaveBeenCalledWith("/authors/OL999999A.json");
+        expect(result.isError).toBe(true);
+        expect(result.content).toHaveLength(1);
+        expect(result.content[0].type).toBe("text");
+        expect(result.content[0].text).toBe(
+          'Author with key "OL999999A" not found.',
+        );
+      }
+    });
+
+    it("should handle CallTool request with invalid author_key format", async () => {
+      const callToolHandler = mockMcpServer.setRequestHandler.mock.calls.find(
+        (call: [any, (...args: any[]) => Promise<any>]) =>
+          call[0] === CallToolRequestSchema,
+      )?.[1];
+
+      expect(callToolHandler).toBeDefined();
+
+      if (callToolHandler) {
+        const mockRequest = {
+          params: {
+            name: "get_author_info",
+            arguments: { author_key: "invalid-key" }, // Invalid format
+          },
+        };
+
+        await expect(callToolHandler(mockRequest as any)).rejects.toThrow(
+          new McpError(
+            ErrorCode.InvalidParams,
+            "Invalid arguments for get_author_info: author_key: Author key must be in the format OL<number>A",
+          ),
+        );
+        expect(mockedAxios.get).not.toHaveBeenCalled();
+      }
+    });
+
+    it("should handle CallTool request with missing author_key argument", async () => {
+      const callToolHandler = mockMcpServer.setRequestHandler.mock.calls.find(
+        (call: [any, (...args: any[]) => Promise<any>]) =>
+          call[0] === CallToolRequestSchema,
+      )?.[1];
+
+      expect(callToolHandler).toBeDefined();
+
+      if (callToolHandler) {
+        const mockRequest = {
+          params: {
+            name: "get_author_info",
+            arguments: {}, // Missing author_key
+          },
+        };
+
+        await expect(callToolHandler(mockRequest as any)).rejects.toThrow(
+          new McpError(
+            ErrorCode.InvalidParams,
+            "Invalid arguments for get_author_info: author_key: Required",
+          ),
+        );
+        expect(mockedAxios.get).not.toHaveBeenCalled();
+      }
+    });
+
+    it("should handle API errors during CallTool request for get_author_info", async () => {
+      const callToolHandler = mockMcpServer.setRequestHandler.mock.calls.find(
+        (call: [any, (...args: any[]) => Promise<any>]) =>
+          call[0] === CallToolRequestSchema,
+      )?.[1];
+
+      expect(callToolHandler).toBeDefined();
+
+      if (callToolHandler) {
+        const apiError = new Error("Network Error");
+        (apiError as any).isAxiosError = true;
+        (apiError as any).response = { statusText: "Gateway Timeout" };
+        mockedAxios.get.mockRejectedValue(apiError);
+
+        const mockRequest = {
+          params: {
+            name: "get_author_info",
+            arguments: { author_key: "OL23919A" },
+          },
+        };
+
+        const result = await callToolHandler(mockRequest as any);
+
+        expect(mockedAxios.get).toHaveBeenCalledWith("/authors/OL23919A.json");
+        expect(result.isError).toBe(true);
+        expect(result.content).toHaveLength(1);
+        expect(result.content[0].type).toBe("text");
+        expect(result.content[0].text).toBe(
+          "Open Library API error: Gateway Timeout",
+        );
       }
     });
   });
