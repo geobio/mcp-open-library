@@ -14,16 +14,14 @@ import { z } from "zod";
 import {
   BookInfo,
   OpenLibrarySearchResponse,
-  AuthorInfo, // Add AuthorInfo
-  OpenLibraryAuthorSearchResponse, // Add OpenLibraryAuthorSearchResponse
+  AuthorInfo,
+  OpenLibraryAuthorSearchResponse,
 } from "./types.js";
 
-// Zod schema for the get_book_by_title tool arguments
 const GetBookByTitleArgsSchema = z.object({
   title: z.string().min(1, { message: "Title cannot be empty" }),
 });
 
-// Zod schema for the get_author_info tool arguments
 const GetAuthorInfoArgsSchema = z.object({
   name: z.string().min(1, { message: "Author name cannot be empty" }),
 });
@@ -40,7 +38,6 @@ class OpenLibraryServer {
       },
       {
         capabilities: {
-          // No resources needed as per plan
           resources: {},
           tools: {},
         },
@@ -53,7 +50,6 @@ class OpenLibraryServer {
 
     this.setupToolHandlers();
 
-    // Error handling
     this.server.onerror = (error) => console.error("[MCP Error]", error);
     process.on("SIGINT", async () => {
       await this.server.close();
@@ -62,11 +58,9 @@ class OpenLibraryServer {
   }
 
   private async _handleGetBookByTitle(args: unknown): Promise<CallToolResult> {
-    // Validate arguments using Zod
     const parseResult = GetBookByTitleArgsSchema.safeParse(args);
 
     if (!parseResult.success) {
-      // Combine Zod error messages into a single string
       const errorMessages = parseResult.error.errors
         .map((e) => `${e.path.join(".")}: ${e.message}`)
         .join(", ");
@@ -76,7 +70,6 @@ class OpenLibraryServer {
       );
     }
 
-    // Use the validated data
     const bookTitle = parseResult.data.title;
 
     try {
@@ -102,7 +95,6 @@ class OpenLibraryServer {
         };
       }
 
-      // Process all matching books instead of just the first one
       const bookResults = Array.isArray(response.data.docs)
         ? response.data.docs.map((doc) => {
             const bookInfo: BookInfo = {
@@ -113,7 +105,6 @@ class OpenLibraryServer {
               edition_count: doc.edition_count || 0,
             };
 
-            // Add cover URL if cover_i exists
             if (doc.cover_i) {
               bookInfo.cover_url = `https://covers.openlibrary.org/b/id/${doc.cover_i}-M.jpg`;
             }
@@ -126,7 +117,6 @@ class OpenLibraryServer {
         content: [
           {
             type: "text",
-            // Return the formatted JSON array as a string
             text: JSON.stringify(bookResults, null, 2),
           },
         ],
@@ -141,7 +131,7 @@ class OpenLibraryServer {
         errorMessage = `Error processing request: ${error.message}`;
       }
       console.error("Error in get_book_by_title:", error);
-      // Return an error response to the MCP client
+
       return {
         content: [
           {
@@ -155,7 +145,6 @@ class OpenLibraryServer {
   }
 
   private async _handleGetAuthorInfo(args: unknown): Promise<CallToolResult> {
-    // Validate arguments using Zod
     const parseResult = GetAuthorInfoArgsSchema.safeParse(args);
 
     if (!parseResult.success) {
@@ -194,7 +183,6 @@ class OpenLibraryServer {
         };
       }
 
-      // Process matching authors
       const authorResults: AuthorInfo[] = response.data.docs.map((doc) => ({
         key: doc.key,
         name: doc.name,
@@ -235,7 +223,6 @@ class OpenLibraryServer {
   }
 
   private setupToolHandlers() {
-    // ListTools handler
     this.server.setRequestHandler(ListToolsRequestSchema, async () => ({
       tools: [
         {
@@ -253,7 +240,7 @@ class OpenLibraryServer {
           },
         },
         {
-          name: "get_author_info", // Add new tool definition
+          name: "get_author_info",
           description: "Search for author information on Open Library.",
           inputSchema: {
             type: "object",
@@ -269,7 +256,6 @@ class OpenLibraryServer {
       ],
     }));
 
-    // CallTool handler
     this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
       switch (request.params.name) {
         case "get_book_by_title":
@@ -292,11 +278,9 @@ class OpenLibraryServer {
   }
 }
 
-// Only run the server if the script is executed directly
 if (process.argv[1] === new URL(import.meta.url).pathname) {
   const server = new OpenLibraryServer();
   server.run().catch(console.error);
 }
 
-// Export the class for testing purposes
 export { OpenLibraryServer };

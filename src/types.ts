@@ -17,7 +17,7 @@ export interface BookInfo {
   first_publish_year: number | null;
   open_library_work_key: string;
   edition_count: number;
-  cover_url?: string; // Add optional cover URL
+  cover_url?: string;
 }
 
 export interface OpenLibraryAuthorDoc {

@@ -635,7 +635,6 @@ describe("OpenLibraryServer", () => {
     });
   });
 
-  // General error handling tests (can remain top-level or be moved)
   it("should handle CallTool request for an unknown tool", async () => {
     const callToolHandler = mockMcpServer.setRequestHandler.mock.calls.find(
       (call: [any, (...args: any[]) => Promise<any>]) =>
