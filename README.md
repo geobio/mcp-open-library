@@ -8,7 +8,7 @@ A Model Context Protocol (MCP) server for the Open Library API that enables AI a
 
 ## Overview
 
-This project implements an MCP server that provides a tool for AI assistants to search the [Open Library](https://openlibrary.org/) for book information by title and author information by name. The server returns structured data about the most relevant matches, including title, authors, publication year, and other metadata for books, and name, birth date, top work, etc., for authors.
+This project implements an MCP server that provides tools for AI assistants to interact with the [Open Library](https://openlibrary.org/). It allows searching for book information by title, searching for authors by name, retrieving detailed author information using their Open Library key, and getting URLs for author photos using their Open Library ID (OLID). The server returns structured data for book and author information.
 
 ## Features
 
