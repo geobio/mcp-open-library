@@ -63,7 +63,6 @@ describe("OpenLibraryServer", () => {
 
       if (listToolsHandler) {
         const result = await listToolsHandler({} as any); // Call the handler
-        // Expect 5 tools now
         expect(result.tools).toHaveLength(4);
         expect(result.tools[0].name).toBe("get_book_by_title");
         expect(result.tools[0].description).toBeDefined();
@@ -356,7 +355,6 @@ describe("OpenLibraryServer", () => {
 
       if (listToolsHandler) {
         const result = await listToolsHandler({} as any);
-        // Expect 5 tools now
         expect(result.tools).toHaveLength(4);
         const authorTool = result.tools.find(
           (tool: any) => tool.name === "get_authors_by_name",
@@ -648,7 +646,6 @@ describe("OpenLibraryServer", () => {
 
       if (listToolsHandler) {
         const result = await listToolsHandler({} as any);
-        // Expect 5 tools now
         expect(result.tools).toHaveLength(4);
         const authorInfoTool = result.tools.find(
           (tool: any) => tool.name === "get_author_info",
@@ -686,7 +683,6 @@ describe("OpenLibraryServer", () => {
             death_date: "2 September 1973",
             bio: "British writer, poet, philologist, and university professor",
             photos: [12345],
-            works_count: 150,
           },
         };
         mockedAxios.get.mockResolvedValue(mockApiResponse);
@@ -884,7 +880,6 @@ describe("OpenLibraryServer", () => {
 
       if (listToolsHandler) {
         const result = await listToolsHandler({} as any);
-        // Expect 5 tools now
         expect(result.tools).toHaveLength(4);
         const authorPhotoTool = result.tools.find(
           (tool: any) => tool.name === "get_author_photo",
