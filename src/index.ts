@@ -37,6 +37,16 @@ const GetAuthorInfoArgsSchema = z.object({
     }),
 });
 
+// Schema for the get_author_photo tool arguments
+const GetAuthorPhotoArgsSchema = z.object({
+  olid: z
+    .string()
+    .min(1, { message: "OLID cannot be empty" })
+    .regex(/^OL\d+A$/, {
+      message: "OLID must be in the format OL<number>A",
+    }),
+});
+
 class OpenLibraryServer {
   private server: Server;
   private axiosInstance;
@@ -312,6 +322,40 @@ class OpenLibraryServer {
     }
   };
 
+  // Handler function for the get_author_photo tool
+  private _handleGetAuthorPhoto = async (
+    args: unknown,
+  ): Promise<CallToolResult> => {
+    const parseResult = GetAuthorPhotoArgsSchema.safeParse(args);
+
+    if (!parseResult.success) {
+      const errorMessages = parseResult.error.errors
+        .map((e) => `${e.path.join(".")}: ${e.message}`)
+        .join(", ");
+      throw new McpError(
+        ErrorCode.InvalidParams,
+        `Invalid arguments for get_author_photo: ${errorMessages}`,
+      );
+    }
+
+    const olid = parseResult.data.olid;
+    const photoUrl = `https://covers.openlibrary.org/a/olid/${olid}-L.jpg`; // Use -L for large size
+
+    // Note: We don't actually fetch the image here, just return the URL.
+    // The Open Library Covers API doesn't provide a way to check if an image exists
+    // other than trying to fetch it. We assume the URL is correct if the OLID format is valid.
+
+    return {
+      content: [
+        {
+          type: "text",
+          text: photoUrl,
+        },
+      ],
+    };
+    // No try/catch needed here as we are just constructing a URL string based on validated input.
+  };
+
   private setupToolHandlers() {
     this.server.setRequestHandler(ListToolsRequestSchema, async () => ({
       tools: [
@@ -359,6 +403,23 @@ class OpenLibraryServer {
             required: ["author_key"],
           },
         },
+        {
+          // Add the new tool definition
+          name: "get_author_photo",
+          description:
+            "Get the URL for an author's photo using their Open Library Author ID (OLID, e.g., OL23919A).",
+          inputSchema: {
+            type: "object",
+            properties: {
+              olid: {
+                type: "string",
+                description:
+                  "The Open Library Author ID (OLID) for the author (e.g., OL23919A).",
+              },
+            },
+            required: ["olid"],
+          },
+        },
       ],
     }));
 
@@ -368,9 +429,11 @@ class OpenLibraryServer {
           return this._handleGetBookByTitle(request.params.arguments);
         case "get_authors_by_name":
           return this._handleGetAuthorsByName(request.params.arguments);
-        // Add case for the new tool
         case "get_author_info":
           return this._handleGetAuthorInfo(request.params.arguments);
+        // Add case for the new tool
+        case "get_author_photo":
+          return this._handleGetAuthorPhoto(request.params.arguments);
         default:
           throw new McpError(
             ErrorCode.MethodNotFound,

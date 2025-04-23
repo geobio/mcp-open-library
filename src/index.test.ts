@@ -63,7 +63,7 @@ describe("OpenLibraryServer", () => {
 
       if (listToolsHandler) {
         const result = await listToolsHandler({} as any); // Call the handler
-        expect(result.tools).toHaveLength(3);
+        expect(result.tools).toHaveLength(4);
         expect(result.tools[0].name).toBe("get_book_by_title");
         expect(result.tools[0].description).toBeDefined();
         expect(result.tools[0].inputSchema).toEqual({
@@ -355,7 +355,7 @@ describe("OpenLibraryServer", () => {
 
       if (listToolsHandler) {
         const result = await listToolsHandler({} as any);
-        expect(result.tools).toHaveLength(3); // Now expects 2 tools
+        expect(result.tools).toHaveLength(4);
         const authorTool = result.tools.find(
           (tool: any) => tool.name === "get_authors_by_name",
         );
@@ -646,7 +646,7 @@ describe("OpenLibraryServer", () => {
 
       if (listToolsHandler) {
         const result = await listToolsHandler({} as any);
-        expect(result.tools).toHaveLength(3);
+        expect(result.tools).toHaveLength(4);
         const authorInfoTool = result.tools.find(
           (tool: any) => tool.name === "get_author_info",
         );
@@ -683,7 +683,6 @@ describe("OpenLibraryServer", () => {
             death_date: "2 September 1973",
             bio: "British writer, poet, philologist, and university professor",
             photos: [12345],
-            works_count: 150,
           },
         };
         mockedAxios.get.mockResolvedValue(mockApiResponse);
@@ -866,6 +865,118 @@ describe("OpenLibraryServer", () => {
         expect(result.content[0].text).toBe(
           "Open Library API error: Gateway Timeout",
         );
+      }
+    });
+  });
+
+  describe("get_author_photo tool", () => {
+    it("should correctly list the get_author_photo tool", async () => {
+      const listToolsHandler = mockMcpServer.setRequestHandler.mock.calls.find(
+        (call: [any, (...args: any[]) => Promise<any>]) =>
+          call[0] === ListToolsRequestSchema,
+      )?.[1];
+
+      expect(listToolsHandler).toBeDefined();
+
+      if (listToolsHandler) {
+        const result = await listToolsHandler({} as any);
+        expect(result.tools).toHaveLength(4);
+        const authorPhotoTool = result.tools.find(
+          (tool: any) => tool.name === "get_author_photo",
+        );
+        expect(authorPhotoTool).toBeDefined();
+        expect(authorPhotoTool.description).toBeDefined();
+        expect(authorPhotoTool.inputSchema).toEqual({
+          type: "object",
+          properties: {
+            olid: {
+              type: "string",
+              description:
+                "The Open Library Author ID (OLID) for the author (e.g., OL23919A).",
+            },
+          },
+          required: ["olid"],
+        });
+      }
+    });
+
+    it("should handle CallTool request for get_author_photo successfully", async () => {
+      const callToolHandler = mockMcpServer.setRequestHandler.mock.calls.find(
+        (call: [any, (...args: any[]) => Promise<any>]) =>
+          call[0] === CallToolRequestSchema,
+      )?.[1];
+
+      expect(callToolHandler).toBeDefined();
+
+      if (callToolHandler) {
+        const mockRequest = {
+          params: {
+            name: "get_author_photo",
+            arguments: { olid: "OL23919A" },
+          },
+        };
+
+        const result = await callToolHandler(mockRequest as any);
+
+        expect(mockedAxios.get).not.toHaveBeenCalled(); // No API call expected
+        expect(result.isError).toBeUndefined();
+        expect(result.content).toHaveLength(1);
+        expect(result.content[0].type).toBe("text");
+        expect(result.content[0].text).toBe(
+          "https://covers.openlibrary.org/a/olid/OL23919A-L.jpg",
+        );
+      }
+    });
+
+    it("should handle CallTool request with invalid olid format", async () => {
+      const callToolHandler = mockMcpServer.setRequestHandler.mock.calls.find(
+        (call: [any, (...args: any[]) => Promise<any>]) =>
+          call[0] === CallToolRequestSchema,
+      )?.[1];
+
+      expect(callToolHandler).toBeDefined();
+
+      if (callToolHandler) {
+        const mockRequest = {
+          params: {
+            name: "get_author_photo",
+            arguments: { olid: "invalid-olid" }, // Invalid format
+          },
+        };
+
+        await expect(callToolHandler(mockRequest as any)).rejects.toThrow(
+          new McpError(
+            ErrorCode.InvalidParams,
+            "Invalid arguments for get_author_photo: olid: OLID must be in the format OL<number>A",
+          ),
+        );
+        expect(mockedAxios.get).not.toHaveBeenCalled();
+      }
+    });
+
+    it("should handle CallTool request with missing olid argument", async () => {
+      const callToolHandler = mockMcpServer.setRequestHandler.mock.calls.find(
+        (call: [any, (...args: any[]) => Promise<any>]) =>
+          call[0] === CallToolRequestSchema,
+      )?.[1];
+
+      expect(callToolHandler).toBeDefined();
+
+      if (callToolHandler) {
+        const mockRequest = {
+          params: {
+            name: "get_author_photo",
+            arguments: {}, // Missing olid
+          },
+        };
+
+        await expect(callToolHandler(mockRequest as any)).rejects.toThrow(
+          new McpError(
+            ErrorCode.InvalidParams,
+            "Invalid arguments for get_author_photo: olid: Required",
+          ),
+        );
+        expect(mockedAxios.get).not.toHaveBeenCalled();
       }
     });
   });
