@@ -63,7 +63,7 @@ describe("OpenLibraryServer", () => {
 
       if (listToolsHandler) {
         const result = await listToolsHandler({} as any); // Call the handler
-        expect(result.tools).toHaveLength(2);
+        expect(result.tools).toHaveLength(3);
         expect(result.tools[0].name).toBe("get_book_by_title");
         expect(result.tools[0].description).toBeDefined();
         expect(result.tools[0].inputSchema).toEqual({
@@ -344,8 +344,8 @@ describe("OpenLibraryServer", () => {
     });
   });
 
-  describe("get_author_info tool", () => {
-    it("should correctly list the get_author_info tool", async () => {
+  describe("get_authors_by_name tool", () => {
+    it("should correctly list the get_authors_by_name tool", async () => {
       const listToolsHandler = mockMcpServer.setRequestHandler.mock.calls.find(
         (call: [any, (...args: any[]) => Promise<any>]) =>
           call[0] === ListToolsRequestSchema,
@@ -355,9 +355,9 @@ describe("OpenLibraryServer", () => {
 
       if (listToolsHandler) {
         const result = await listToolsHandler({} as any);
-        expect(result.tools).toHaveLength(2); // Now expects 2 tools
+        expect(result.tools).toHaveLength(3); // Now expects 2 tools
         const authorTool = result.tools.find(
-          (tool: any) => tool.name === "get_author_info",
+          (tool: any) => tool.name === "get_authors_by_name",
         );
         expect(authorTool).toBeDefined();
         expect(authorTool.description).toBeDefined();
@@ -374,7 +374,7 @@ describe("OpenLibraryServer", () => {
       }
     });
 
-    it("should handle CallTool request for get_author_info successfully", async () => {
+    it("should handle CallTool request for get_authors_by_name successfully", async () => {
       const callToolHandler = mockMcpServer.setRequestHandler.mock.calls.find(
         (call: [any, (...args: any[]) => Promise<any>]) =>
           call[0] === CallToolRequestSchema,
@@ -401,7 +401,7 @@ describe("OpenLibraryServer", () => {
 
         const mockRequest = {
           params: {
-            name: "get_author_info",
+            name: "get_authors_by_name",
             arguments: { name: "J. R. R. Tolkien" },
           },
         };
@@ -446,7 +446,7 @@ describe("OpenLibraryServer", () => {
 
         const mockRequest = {
           params: {
-            name: "get_author_info",
+            name: "get_authors_by_name",
             arguments: { name: "NonExistentAuthor123" },
           },
         };
@@ -476,7 +476,7 @@ describe("OpenLibraryServer", () => {
       if (callToolHandler) {
         const mockRequest = {
           params: {
-            name: "get_author_info",
+            name: "get_authors_by_name",
             arguments: {}, // Missing name
           },
         };
@@ -484,14 +484,14 @@ describe("OpenLibraryServer", () => {
         await expect(callToolHandler(mockRequest as any)).rejects.toThrow(
           new McpError(
             ErrorCode.InvalidParams,
-            "Invalid arguments for get_author_info: name: Required",
+            "Invalid arguments for get_authors_by_name: name: Required",
           ),
         );
         expect(mockedAxios.get).not.toHaveBeenCalled();
       }
     });
 
-    it("should handle API errors during CallTool request for get_author_info", async () => {
+    it("should handle API errors during CallTool request for get_authors_by_name", async () => {
       const callToolHandler = mockMcpServer.setRequestHandler.mock.calls.find(
         (call: [any, (...args: any[]) => Promise<any>]) =>
           call[0] === CallToolRequestSchema,
@@ -507,7 +507,7 @@ describe("OpenLibraryServer", () => {
 
         const mockRequest = {
           params: {
-            name: "get_author_info",
+            name: "get_authors_by_name",
             arguments: { name: "ErrorProneAuthor" },
           },
         };
@@ -526,7 +526,7 @@ describe("OpenLibraryServer", () => {
       }
     });
 
-    it("should handle API errors without response status text for get_author_info", async () => {
+    it("should handle API errors without response status text for get_authors_by_name", async () => {
       const callToolHandler = mockMcpServer.setRequestHandler.mock.calls.find(
         (call: [any, (...args: any[]) => Promise<any>]) =>
           call[0] === CallToolRequestSchema,
@@ -547,7 +547,7 @@ describe("OpenLibraryServer", () => {
 
         const mockRequest = {
           params: {
-            name: "get_author_info",
+            name: "get_authors_by_name",
             arguments: { name: "ErrorAuthorNoStatus" },
           },
         };
@@ -598,7 +598,7 @@ describe("OpenLibraryServer", () => {
 
         const mockRequest = {
           params: {
-            name: "get_author_info",
+            name: "get_authors_by_name",
             arguments: { name: "Smith" },
           },
         };

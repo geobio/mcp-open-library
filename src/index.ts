@@ -16,14 +16,25 @@ import {
   OpenLibrarySearchResponse,
   AuthorInfo,
   OpenLibraryAuthorSearchResponse,
+  DetailedAuthorInfo, // Import the new type
 } from "./types.js";
 
 const GetBookByTitleArgsSchema = z.object({
   title: z.string().min(1, { message: "Title cannot be empty" }),
 });
 
-const GetAuthorInfoArgsSchema = z.object({
+const GetAuthorsByNameArgsSchema = z.object({
   name: z.string().min(1, { message: "Author name cannot be empty" }),
+});
+
+// Add schema for the new tool's arguments
+const GetAuthorInfoArgsSchema = z.object({
+  author_key: z
+    .string()
+    .min(1, { message: "Author key cannot be empty" })
+    .regex(/^OL\d+A$/, {
+      message: "Author key must be in the format OL<number>A",
+    }),
 });
 
 class OpenLibraryServer {
@@ -144,8 +155,10 @@ class OpenLibraryServer {
     }
   }
 
-  private async _handleGetAuthorInfo(args: unknown): Promise<CallToolResult> {
-    const parseResult = GetAuthorInfoArgsSchema.safeParse(args);
+  private async _handleGetAuthorsByName(
+    args: unknown,
+  ): Promise<CallToolResult> {
+    const parseResult = GetAuthorsByNameArgsSchema.safeParse(args);
 
     if (!parseResult.success) {
       const errorMessages = parseResult.error.errors
@@ -153,7 +166,7 @@ class OpenLibraryServer {
         .join(", ");
       throw new McpError(
         ErrorCode.InvalidParams,
-        `Invalid arguments for get_author_info: ${errorMessages}`,
+        `Invalid arguments for get_authors_by_name: ${errorMessages}`,
       );
     }
 
@@ -209,7 +222,7 @@ class OpenLibraryServer {
       } else if (error instanceof Error) {
         errorMessage = `Error processing request: ${error.message}`;
       }
-      console.error("Error in get_author_info:", error);
+      console.error("Error in get_authors_by_name:", error);
       return {
         content: [
           {
@@ -221,6 +234,83 @@ class OpenLibraryServer {
       };
     }
   }
+
+  // Add handler function for the new tool
+  private _handleGetAuthorInfo = async (
+    args: unknown,
+  ): Promise<CallToolResult> => {
+    const parseResult = GetAuthorInfoArgsSchema.safeParse(args);
+
+    if (!parseResult.success) {
+      const errorMessages = parseResult.error.errors
+        .map((e) => `${e.path.join(".")}: ${e.message}`)
+        .join(", ");
+      throw new McpError(
+        ErrorCode.InvalidParams,
+        `Invalid arguments for get_author_info: ${errorMessages}`,
+      );
+    }
+
+    const authorKey = parseResult.data.author_key;
+
+    try {
+      const response = await this.axiosInstance.get<DetailedAuthorInfo>(
+        `/authors/${authorKey}.json`,
+      );
+
+      if (!response.data) {
+        // Should not happen if API returns 200, but good practice
+        return {
+          content: [
+            {
+              type: "text",
+              text: `No data found for author key: "${authorKey}"`,
+            },
+          ],
+        };
+      }
+
+      // Optionally format the bio if it's an object
+      const authorData = { ...response.data };
+      if (typeof authorData.bio === "object" && authorData.bio !== null) {
+        authorData.bio = authorData.bio.value;
+      }
+
+      return {
+        content: [
+          {
+            type: "text",
+            // Return the full author details as JSON
+            text: JSON.stringify(authorData, null, 2),
+          },
+        ],
+      };
+    } catch (error) {
+      let errorMessage = `Failed to fetch author data for key ${authorKey}.`;
+      if (axios.isAxiosError(error)) {
+        if (error.response?.status === 404) {
+          errorMessage = `Author with key "${authorKey}" not found.`;
+        } else {
+          errorMessage = `Open Library API error: ${
+            error.response?.statusText ?? error.message
+          }`;
+        }
+      } else if (error instanceof Error) {
+        errorMessage = `Error processing request: ${error.message}`;
+      }
+      console.error(`Error in get_author_info (${authorKey}):`, error);
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: errorMessage,
+          },
+        ],
+        isError: true,
+      };
+    }
+  };
 
   private setupToolHandlers() {
     this.server.setRequestHandler(ListToolsRequestSchema, async () => ({
@@ -240,7 +330,7 @@ class OpenLibraryServer {
           },
         },
         {
-          name: "get_author_info",
+          name: "get_authors_by_name",
           description: "Search for author information on Open Library.",
           inputSchema: {
             type: "object",
@@ -253,6 +343,22 @@ class OpenLibraryServer {
             required: ["name"],
           },
         },
+        {
+          name: "get_author_info",
+          description:
+            "Get detailed information for a specific author using their Open Library Author Key (e.g., OL23919A).",
+          inputSchema: {
+            type: "object",
+            properties: {
+              author_key: {
+                type: "string",
+                description:
+                  "The Open Library key for the author (e.g., OL23919A).",
+              },
+            },
+            required: ["author_key"],
+          },
+        },
       ],
     }));
 
@@ -260,6 +366,9 @@ class OpenLibraryServer {
       switch (request.params.name) {
         case "get_book_by_title":
           return this._handleGetBookByTitle(request.params.arguments);
+        case "get_authors_by_name":
+          return this._handleGetAuthorsByName(request.params.arguments);
+        // Add case for the new tool
         case "get_author_info":
           return this._handleGetAuthorInfo(request.params.arguments);
         default:

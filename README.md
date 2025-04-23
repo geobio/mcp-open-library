@@ -51,7 +51,8 @@ Access the MCP Inspector and then test the tool e.g.
 This server implements the Model Context Protocol, which means it can be used by any MCP-compatible AI assistant or client e.g. [Claude Desktop](https://modelcontextprotocol.io/quickstart/user). The server exposes the following tools:
 
 - `get_book_by_title`: Search for book information by title
-- `get_author_info`: Search for author information by name
+- `get_authors_by_name`: Search for author information by name
+- `get_author_info`: Get detailed information for a specific author using their Open Library Author Key
 
 **Example `get_book_by_title` input:**
 ```json
@@ -76,14 +77,14 @@ This server implements the Model Context Protocol, which means it can be used by
 ]
 ```
 
-**Example `get_author_info` input:**
+**Example `get_authors_by_name` input:**
 ```json
 {
   "name": "J.R.R. Tolkien"
 }
 ```
 
-**Example `get_author_info` output:**
+**Example `get_authors_by_name` output:**
 ```json
 [
   {
@@ -97,6 +98,36 @@ This server implements the Model Context Protocol, which means it can be used by
     "work_count": 648
   }
 ]
+```
+
+**Example `get_author_info` input:**
+```json
+{
+  "author_key": "OL26320A"
+}
+```
+
+**Example `get_author_info` output:**
+```json
+{
+  "name": "J. R. R. Tolkien",
+  "personal_name": "John Ronald Reuel Tolkien",
+  "birth_date": "3 January 1892",
+  "death_date": "2 September 1973",
+  "bio": "John Ronald Reuel Tolkien (1892-1973) was a major scholar of the English language, specializing in Old and Middle English. He served as the Rawlinson and Bosworth Professor of Anglo-Saxon and later the Merton Professor of English Language and Literature at Oxford University.",
+  "alternate_names": ["John Ronald Reuel Tolkien"],
+  "photos": [6791763],
+  "key": "/authors/OL26320A",
+  "remote_ids": {
+    "viaf": "95218067",
+    "wikidata": "Q892"
+  },
+  "revision": 43,
+  "last_modified": {
+    "type": "/type/datetime",
+    "value": "2023-02-12T05:50:22.881"
+  }
+}
 ```
 
 An example of this tool being used in Claude Desktop can be see here:
