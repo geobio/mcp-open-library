@@ -1,6 +1,6 @@
 # MCP Open Library
 
-A Model Context Protocol (MCP) server for the Open Library API that enables AI assistants to search for book information.
+A Model Context Protocol (MCP) server for the Open Library API that enables AI assistants to search for book and author information.
 
 <a href="https://glama.ai/mcp/servers/@8enSmith/mcp-open-library">
   <img width="380" height="200" src="https://glama.ai/mcp/servers/@8enSmith/mcp-open-library/badge" alt="mcp-open-library MCP server" />
