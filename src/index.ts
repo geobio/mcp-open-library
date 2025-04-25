@@ -11,6 +11,7 @@ import {
 import axios from "axios";
 import { z } from "zod";
 
+import handleGetBookCover from "./tools/get-book-cover.js"; // Import the new tool handler
 import {
   BookInfo,
   OpenLibrarySearchResponse,
@@ -46,7 +47,6 @@ const GetAuthorPhotoArgsSchema = z.object({
       message: "OLID must be in the format OL<number>A",
     }),
 });
-
 class OpenLibraryServer {
   private server: Server;
   private axiosInstance;
@@ -420,6 +420,34 @@ class OpenLibraryServer {
             required: ["olid"],
           },
         },
+        {
+          // Add the get-book-cover tool definition
+          name: "get_book_cover",
+          description:
+            "Get the URL for a book's cover image using a key (ISBN, OCLC, LCCN, OLID, ID) and value.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              key: {
+                type: "string",
+                // ID is internal cover ID
+                enum: ["ISBN", "OCLC", "LCCN", "OLID", "ID"],
+                description:
+                  "The type of identifier used (ISBN, OCLC, LCCN, OLID, ID).",
+              },
+              value: {
+                type: "string",
+                description: "The value of the identifier.",
+              },
+              size: {
+                type: "string",
+                enum: ["S", "M", "L"],
+                description: "The desired size of the cover (S, M, or L).",
+              },
+            },
+            required: ["key", "value"],
+          },
+        },
       ],
     }));
 
@@ -433,9 +461,10 @@ class OpenLibraryServer {
           return this._handleGetAuthorsByName(args);
         case "get_author_info":
           return this._handleGetAuthorInfo(args);
-        // Add case for the new tool
         case "get_author_photo":
           return this._handleGetAuthorPhoto(args);
+        case "get_book_cover":
+          return handleGetBookCover(args);
         default:
           throw new McpError(ErrorCode.MethodNotFound, `Unknown tool: ${name}`);
       }

@@ -63,7 +63,7 @@ describe("OpenLibraryServer", () => {
 
       if (listToolsHandler) {
         const result = await listToolsHandler({} as any); // Call the handler
-        expect(result.tools).toHaveLength(4);
+        expect(result.tools).toHaveLength(5);
         expect(result.tools[0].name).toBe("get_book_by_title");
         expect(result.tools[0].description).toBeDefined();
         expect(result.tools[0].inputSchema).toEqual({
@@ -355,7 +355,7 @@ describe("OpenLibraryServer", () => {
 
       if (listToolsHandler) {
         const result = await listToolsHandler({} as any);
-        expect(result.tools).toHaveLength(4);
+        expect(result.tools).toHaveLength(5);
         const authorTool = result.tools.find(
           (tool: any) => tool.name === "get_authors_by_name",
         );
@@ -646,7 +646,7 @@ describe("OpenLibraryServer", () => {
 
       if (listToolsHandler) {
         const result = await listToolsHandler({} as any);
-        expect(result.tools).toHaveLength(4);
+        expect(result.tools).toHaveLength(5);
         const authorInfoTool = result.tools.find(
           (tool: any) => tool.name === "get_author_info",
         );
@@ -880,7 +880,7 @@ describe("OpenLibraryServer", () => {
 
       if (listToolsHandler) {
         const result = await listToolsHandler({} as any);
-        expect(result.tools).toHaveLength(4);
+        expect(result.tools).toHaveLength(5);
         const authorPhotoTool = result.tools.find(
           (tool: any) => tool.name === "get_author_photo",
         );
@@ -892,7 +892,7 @@ describe("OpenLibraryServer", () => {
             olid: {
               type: "string",
               description:
-                "The Open Library Author ID (OLID) for the author (e.g., OL23919A).",
+                "The Open Library Author ID (OLID) for the author (e.g. OL23919A).",
             },
           },
           required: ["olid"],
@@ -977,6 +977,48 @@ describe("OpenLibraryServer", () => {
           ),
         );
         expect(mockedAxios.get).not.toHaveBeenCalled();
+      }
+    });
+  });
+
+  describe("get_book_cover tool", () => {
+    it("should correctly list the get_book_cover tool", async () => {
+      const listToolsHandler = mockMcpServer.setRequestHandler.mock.calls.find(
+        (call: [any, (...args: any[]) => Promise<any>]) =>
+          call[0] === ListToolsRequestSchema,
+      )?.[1];
+
+      expect(listToolsHandler).toBeDefined();
+
+      if (listToolsHandler) {
+        const result = await listToolsHandler({} as any);
+        expect(result.tools.length).toBeGreaterThanOrEqual(5);
+        const bookCoverTool = result.tools.find(
+          (tool: any) => tool.name === "get_book_cover",
+        );
+        expect(bookCoverTool).toBeDefined();
+        expect(bookCoverTool.description).toBeDefined();
+        expect(bookCoverTool.inputSchema).toEqual({
+          type: "object",
+          properties: {
+            key: {
+              type: "string",
+              enum: ["ISBN", "OCLC", "LCCN", "OLID", "ID"],
+              description:
+                "The type of identifier used (ISBN, OCLC, LCCN, OLID, ID).",
+            },
+            value: {
+              type: "string",
+              description: "The value of the identifier.",
+            },
+            size: {
+              type: "string",
+              enum: ["S", "M", "L"],
+              description: "The desired size of the cover (S, M, or L).",
+            },
+          },
+          required: ["key", "value"],
+        });
       }
     });
   });
