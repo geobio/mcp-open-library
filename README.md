@@ -54,6 +54,7 @@ This server implements the Model Context Protocol, which means it can be used by
 - `get_authors_by_name`: Search for author information by name
 - `get_author_info`: Get detailed information for a specific author using their Open Library Author Key
 - `get_author_photo`: Get the URL for an author's photo using their Open Library Author ID (OLID)
+- `get_book_cover`: Get the URL for a book's cover image using a specific identifier (ISBN, OCLC, LCCN, OLID, or ID)
 
 **Example `get_book_by_title` input:**
 ```json
@@ -142,6 +143,25 @@ This server implements the Model Context Protocol, which means it can be used by
 ```text
 https://covers.openlibrary.org/a/olid/OL26320A-L.jpg
 ```
+
+**Example `get_book_cover` input:**
+```json
+{
+  "key": "ISBN",
+  "value": "9780547928227",
+  "size": "L"
+}
+```
+
+**Example `get_book_cover` output:**
+```text
+https://covers.openlibrary.org/b/isbn/9780547928227-L.jpg
+```
+
+The `get_book_cover` tool accepts the following parameters:
+- `key`: The type of identifier (one of: `ISBN`, `OCLC`, `LCCN`, `OLID`, or `ID`)
+- `value`: The value of the identifier
+- `size`: Optional cover size (`S` for small, `M` for medium, `L` for large, defaults to `L`)
 
 An example of this tool being used in Claude Desktop can be see here:
 
