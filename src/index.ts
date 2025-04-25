@@ -11,18 +11,13 @@ import {
 import axios from "axios";
 import { z } from "zod";
 
+import handleGetBookByTitle from "./tools/get-book-by-title.js"; // Import the refactored tool handler
 import handleGetBookCover from "./tools/get-book-cover.js"; // Import the new tool handler
 import {
-  BookInfo,
-  OpenLibrarySearchResponse,
   AuthorInfo,
   OpenLibraryAuthorSearchResponse,
   DetailedAuthorInfo, // Import the new type
 } from "./types.js";
-
-const GetBookByTitleArgsSchema = z.object({
-  title: z.string().min(1, { message: "Title cannot be empty" }),
-});
 
 const GetAuthorsByNameArgsSchema = z.object({
   name: z.string().min(1, { message: "Author name cannot be empty" }),
@@ -76,93 +71,6 @@ class OpenLibraryServer {
       await this.server.close();
       process.exit(0);
     });
-  }
-
-  private async _handleGetBookByTitle(args: unknown): Promise<CallToolResult> {
-    const parseResult = GetBookByTitleArgsSchema.safeParse(args);
-
-    if (!parseResult.success) {
-      const errorMessages = parseResult.error.errors
-        .map((e) => `${e.path.join(".")}: ${e.message}`)
-        .join(", ");
-      throw new McpError(
-        ErrorCode.InvalidParams,
-        `Invalid arguments for get_book_by_title: ${errorMessages}`,
-      );
-    }
-
-    const bookTitle = parseResult.data.title;
-
-    try {
-      const response = await this.axiosInstance.get<OpenLibrarySearchResponse>(
-        "/search.json",
-        {
-          params: { title: bookTitle },
-        },
-      );
-
-      if (
-        !response.data ||
-        !response.data.docs ||
-        response.data.docs.length === 0
-      ) {
-        return {
-          content: [
-            {
-              type: "text",
-              text: `No books found matching title: "${bookTitle}"`,
-            },
-          ],
-        };
-      }
-
-      const bookResults = Array.isArray(response.data.docs)
-        ? response.data.docs.map((doc) => {
-            const bookInfo: BookInfo = {
-              title: doc.title,
-              authors: doc.author_name || [],
-              first_publish_year: doc.first_publish_year || null,
-              open_library_work_key: doc.key,
-              edition_count: doc.edition_count || 0,
-            };
-
-            if (doc.cover_i) {
-              bookInfo.cover_url = `https://covers.openlibrary.org/b/id/${doc.cover_i}-M.jpg`;
-            }
-
-            return bookInfo;
-          })
-        : [];
-
-      return {
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify(bookResults, null, 2),
-          },
-        ],
-      };
-    } catch (error) {
-      let errorMessage = "Failed to fetch book data from Open Library.";
-      if (axios.isAxiosError(error)) {
-        errorMessage = `Open Library API error: ${
-          error.response?.statusText ?? error.message
-        }`;
-      } else if (error instanceof Error) {
-        errorMessage = `Error processing request: ${error.message}`;
-      }
-      console.error("Error in get_book_by_title:", error);
-
-      return {
-        content: [
-          {
-            type: "text",
-            text: errorMessage,
-          },
-        ],
-        isError: true,
-      };
-    }
   }
 
   private async _handleGetAuthorsByName(
@@ -456,7 +364,7 @@ class OpenLibraryServer {
 
       switch (name) {
         case "get_book_by_title":
-          return this._handleGetBookByTitle(args);
+          return handleGetBookByTitle(args, this.axiosInstance);
         case "get_authors_by_name":
           return this._handleGetAuthorsByName(args);
         case "get_author_info":
