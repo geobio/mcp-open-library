@@ -86,7 +86,7 @@ const handleGetBookByTitle = async (
   } catch (error) {
     let errorMessage = "Failed to fetch book data from Open Library.";
     if (axios.isAxiosError(error)) {
-      errorMessage = `Open Library API error: ${
+      errorMessage = `Error processing request: ${
         error.response?.statusText ?? error.message
       }`;
     } else if (error instanceof Error) {
