@@ -47,6 +47,20 @@ const GetAuthorPhotoArgsSchema = z.object({
     }),
 });
 
+// Schema for the get_book_cover tool arguments
+const GetBookCoverArgsSchema = z.object({
+  key: z.enum(["ISBN", "OCLC", "LCCN", "OLID", "ID"], {
+    errorMap: () => ({
+      message: "Key must be one of ISBN, OCLC, LCCN, OLID, ID",
+    }),
+  }),
+  value: z.string().min(1, { message: "Value cannot be empty" }),
+  size: z
+    .nullable(z.enum(["S", "M", "L"]))
+    .optional()
+    .transform((val) => val || "L"),
+});
+
 class OpenLibraryServer {
   private server: Server;
   private axiosInstance;
@@ -356,6 +370,37 @@ class OpenLibraryServer {
     // No try/catch needed here as we are just constructing a URL string based on validated input.
   };
 
+  // Handler function for the get_book_cover tool
+  private _handleGetBookCover = async (
+    args: unknown,
+  ): Promise<CallToolResult> => {
+    const parseResult = GetBookCoverArgsSchema.safeParse(args);
+
+    if (!parseResult.success) {
+      const errorMessages = parseResult.error.errors
+        .map((e) => `${e.path.join(".")}: ${e.message}`)
+        .join(", ");
+      throw new McpError(
+        ErrorCode.InvalidParams,
+        `Invalid arguments for get_book_cover: ${errorMessages}`,
+      );
+    }
+
+    const { key, value, size } = parseResult.data;
+    // Construct the URL according to the Open Library Covers API format
+    const coverUrl = `https://covers.openlibrary.org/b/${key.toLowerCase()}/${value}-${size}.jpg`;
+
+    return {
+      content: [
+        {
+          type: "text",
+          text: coverUrl,
+        },
+      ],
+    };
+    // No try/catch needed here as we are just constructing a URL string based on validated input.
+  };
+
   private setupToolHandlers() {
     this.server.setRequestHandler(ListToolsRequestSchema, async () => ({
       tools: [
@@ -420,6 +465,34 @@ class OpenLibraryServer {
             required: ["olid"],
           },
         },
+        {
+          // Add the get-book-cover tool definition
+          name: "get_book_cover",
+          description:
+            "Get the URL for a book's cover image using a key (ISBN, OCLC, LCCN, OLID, ID) and value.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              key: {
+                type: "string",
+                // ID is internal cover ID
+                enum: ["ISBN", "OCLC", "LCCN", "OLID", "ID"],
+                description:
+                  "The type of identifier used (ISBN, OCLC, LCCN, OLID, ID).",
+              },
+              value: {
+                type: "string",
+                description: "The value of the identifier.",
+              },
+              size: {
+                type: "string",
+                enum: ["S", "M", "L"],
+                description: "The desired size of the cover (S, M, or L).",
+              },
+            },
+            required: ["key", "value"],
+          },
+        },
       ],
     }));
 
@@ -433,9 +506,10 @@ class OpenLibraryServer {
           return this._handleGetAuthorsByName(args);
         case "get_author_info":
           return this._handleGetAuthorInfo(args);
-        // Add case for the new tool
         case "get_author_photo":
           return this._handleGetAuthorPhoto(args);
+        case "get_book_cover":
+          return this._handleGetBookCover(args);
         default:
           throw new McpError(ErrorCode.MethodNotFound, `Unknown tool: ${name}`);
       }

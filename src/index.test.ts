@@ -63,7 +63,7 @@ describe("OpenLibraryServer", () => {
 
       if (listToolsHandler) {
         const result = await listToolsHandler({} as any); // Call the handler
-        expect(result.tools).toHaveLength(4);
+        expect(result.tools).toHaveLength(5);
         expect(result.tools[0].name).toBe("get_book_by_title");
         expect(result.tools[0].description).toBeDefined();
         expect(result.tools[0].inputSchema).toEqual({
@@ -355,7 +355,7 @@ describe("OpenLibraryServer", () => {
 
       if (listToolsHandler) {
         const result = await listToolsHandler({} as any);
-        expect(result.tools).toHaveLength(4);
+        expect(result.tools).toHaveLength(5);
         const authorTool = result.tools.find(
           (tool: any) => tool.name === "get_authors_by_name",
         );
@@ -646,7 +646,7 @@ describe("OpenLibraryServer", () => {
 
       if (listToolsHandler) {
         const result = await listToolsHandler({} as any);
-        expect(result.tools).toHaveLength(4);
+        expect(result.tools).toHaveLength(5);
         const authorInfoTool = result.tools.find(
           (tool: any) => tool.name === "get_author_info",
         );
@@ -880,7 +880,7 @@ describe("OpenLibraryServer", () => {
 
       if (listToolsHandler) {
         const result = await listToolsHandler({} as any);
-        expect(result.tools).toHaveLength(4);
+        expect(result.tools).toHaveLength(5);
         const authorPhotoTool = result.tools.find(
           (tool: any) => tool.name === "get_author_photo",
         );
@@ -892,7 +892,7 @@ describe("OpenLibraryServer", () => {
             olid: {
               type: "string",
               description:
-                "The Open Library Author ID (OLID) for the author (e.g., OL23919A).",
+                "The Open Library Author ID (OLID) for the author (e.g. OL23919A).",
             },
           },
           required: ["olid"],
@@ -977,6 +977,201 @@ describe("OpenLibraryServer", () => {
           ),
         );
         expect(mockedAxios.get).not.toHaveBeenCalled();
+      }
+    });
+  });
+
+  describe("get_book_cover tool", () => {
+    it("should correctly list the get_book_cover tool", async () => {
+      const listToolsHandler = mockMcpServer.setRequestHandler.mock.calls.find(
+        (call: [any, (...args: any[]) => Promise<any>]) =>
+          call[0] === ListToolsRequestSchema,
+      )?.[1];
+
+      expect(listToolsHandler).toBeDefined();
+
+      if (listToolsHandler) {
+        const result = await listToolsHandler({} as any);
+        expect(result.tools.length).toBeGreaterThanOrEqual(5);
+        const bookCoverTool = result.tools.find(
+          (tool: any) => tool.name === "get_book_cover",
+        );
+        expect(bookCoverTool).toBeDefined();
+        expect(bookCoverTool.description).toBeDefined();
+        expect(bookCoverTool.inputSchema).toEqual({
+          type: "object",
+          properties: {
+            key: {
+              type: "string",
+              enum: ["ISBN", "OCLC", "LCCN", "OLID", "ID"],
+              description:
+                "The type of identifier used (ISBN, OCLC, LCCN, OLID, ID).",
+            },
+            value: {
+              type: "string",
+              description: "The value of the identifier.",
+            },
+            size: {
+              type: "string",
+              enum: ["S", "M", "L"],
+              description: "The desired size of the cover (S, M, or L).",
+            },
+          },
+          required: ["key", "value"],
+        });
+      }
+    });
+
+    it("should handle CallTool request for get_book_cover successfully with ISBN", async () => {
+      const callToolHandler = mockMcpServer.setRequestHandler.mock.calls.find(
+        (call: [any, (...args: any[]) => Promise<any>]) =>
+          call[0] === CallToolRequestSchema,
+      )?.[1];
+
+      expect(callToolHandler).toBeDefined();
+
+      if (callToolHandler) {
+        const mockRequest = {
+          params: {
+            name: "get_book_cover",
+            arguments: { key: "ISBN", value: "9780547928227", size: "L" },
+          },
+        };
+
+        const result = await callToolHandler(mockRequest as any);
+
+        expect(mockedAxios.get).not.toHaveBeenCalled(); // No API call expected
+        expect(result.isError).toBeUndefined();
+        expect(result.content).toHaveLength(1);
+        expect(result.content[0].type).toBe("text");
+        expect(result.content[0].text).toBe(
+          "https://covers.openlibrary.org/b/isbn/9780547928227-L.jpg",
+        );
+      }
+    });
+
+    it("should handle CallTool request for get_book_cover with OLID", async () => {
+      const callToolHandler = mockMcpServer.setRequestHandler.mock.calls.find(
+        (call: [any, (...args: any[]) => Promise<any>]) =>
+          call[0] === CallToolRequestSchema,
+      )?.[1];
+
+      expect(callToolHandler).toBeDefined();
+
+      if (callToolHandler) {
+        const mockRequest = {
+          params: {
+            name: "get_book_cover",
+            arguments: { key: "OLID", value: "OL45883W", size: "M" },
+          },
+        };
+
+        const result = await callToolHandler(mockRequest as any);
+
+        expect(result.isError).toBeUndefined();
+        expect(result.content[0].text).toBe(
+          "https://covers.openlibrary.org/b/olid/OL45883W-M.jpg",
+        );
+      }
+    });
+
+    it("should use default size (L) when size is not provided", async () => {
+      const callToolHandler = mockMcpServer.setRequestHandler.mock.calls.find(
+        (call: [any, (...args: any[]) => Promise<any>]) =>
+          call[0] === CallToolRequestSchema,
+      )?.[1];
+
+      expect(callToolHandler).toBeDefined();
+
+      if (callToolHandler) {
+        const mockRequest = {
+          params: {
+            name: "get_book_cover",
+            arguments: { key: "ID", value: "12345" }, // No size provided
+          },
+        };
+
+        const result = await callToolHandler(mockRequest as any);
+
+        expect(result.isError).toBeUndefined();
+        expect(result.content[0].text).toBe(
+          "https://covers.openlibrary.org/b/id/12345-L.jpg", // Default to L
+        );
+      }
+    });
+
+    it("should handle missing value in arguments", async () => {
+      const callToolHandler = mockMcpServer.setRequestHandler.mock.calls.find(
+        (call: [any, (...args: any[]) => Promise<any>]) =>
+          call[0] === CallToolRequestSchema,
+      )?.[1];
+
+      expect(callToolHandler).toBeDefined();
+
+      if (callToolHandler) {
+        const mockRequest = {
+          params: {
+            name: "get_book_cover",
+            arguments: { key: "ISBN" }, // Missing value
+          },
+        };
+
+        await expect(callToolHandler(mockRequest as any)).rejects.toThrow(
+          new McpError(
+            ErrorCode.InvalidParams,
+            "Invalid arguments for get_book_cover: value: Required",
+          ),
+        );
+      }
+    });
+
+    it("should handle invalid key type", async () => {
+      const callToolHandler = mockMcpServer.setRequestHandler.mock.calls.find(
+        (call: [any, (...args: any[]) => Promise<any>]) =>
+          call[0] === CallToolRequestSchema,
+      )?.[1];
+
+      expect(callToolHandler).toBeDefined();
+
+      if (callToolHandler) {
+        const mockRequest = {
+          params: {
+            name: "get_book_cover",
+            arguments: { key: "INVALID_TYPE", value: "12345" },
+          },
+        };
+
+        await expect(callToolHandler(mockRequest as any)).rejects.toThrow(
+          new McpError(
+            ErrorCode.InvalidParams,
+            "Invalid arguments for get_book_cover: key: Key must be one of ISBN, OCLC, LCCN, OLID, ID",
+          ),
+        );
+      }
+    });
+
+    it("should handle invalid size value", async () => {
+      const callToolHandler = mockMcpServer.setRequestHandler.mock.calls.find(
+        (call: [any, (...args: any[]) => Promise<any>]) =>
+          call[0] === CallToolRequestSchema,
+      )?.[1];
+
+      expect(callToolHandler).toBeDefined();
+
+      if (callToolHandler) {
+        const mockRequest = {
+          params: {
+            name: "get_book_cover",
+            arguments: { key: "ISBN", value: "12345", size: "XL" }, // Invalid size
+          },
+        };
+
+        await expect(callToolHandler(mockRequest as any)).rejects.toThrow(
+          new McpError(
+            ErrorCode.InvalidParams,
+            "Invalid arguments for get_book_cover: size: Invalid enum value. Expected 'S' | 'M' | 'L', received 'XL'",
+          ),
+        );
       }
     });
   });
