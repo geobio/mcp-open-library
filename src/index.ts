@@ -11,6 +11,7 @@ import {
 import axios from "axios";
 import { z } from "zod";
 
+import handleGetBookCover from "./tools/get-book-cover.js"; // Import the new tool handler
 import {
   BookInfo,
   OpenLibrarySearchResponse,
@@ -46,21 +47,6 @@ const GetAuthorPhotoArgsSchema = z.object({
       message: "OLID must be in the format OL<number>A",
     }),
 });
-
-// Schema for the get_book_cover tool arguments
-const GetBookCoverArgsSchema = z.object({
-  key: z.enum(["ISBN", "OCLC", "LCCN", "OLID", "ID"], {
-    errorMap: () => ({
-      message: "Key must be one of ISBN, OCLC, LCCN, OLID, ID",
-    }),
-  }),
-  value: z.string().min(1, { message: "Value cannot be empty" }),
-  size: z
-    .nullable(z.enum(["S", "M", "L"]))
-    .optional()
-    .transform((val) => val || "L"),
-});
-
 class OpenLibraryServer {
   private server: Server;
   private axiosInstance;
@@ -370,37 +356,6 @@ class OpenLibraryServer {
     // No try/catch needed here as we are just constructing a URL string based on validated input.
   };
 
-  // Handler function for the get_book_cover tool
-  private _handleGetBookCover = async (
-    args: unknown,
-  ): Promise<CallToolResult> => {
-    const parseResult = GetBookCoverArgsSchema.safeParse(args);
-
-    if (!parseResult.success) {
-      const errorMessages = parseResult.error.errors
-        .map((e) => `${e.path.join(".")}: ${e.message}`)
-        .join(", ");
-      throw new McpError(
-        ErrorCode.InvalidParams,
-        `Invalid arguments for get_book_cover: ${errorMessages}`,
-      );
-    }
-
-    const { key, value, size } = parseResult.data;
-    // Construct the URL according to the Open Library Covers API format
-    const coverUrl = `https://covers.openlibrary.org/b/${key.toLowerCase()}/${value}-${size}.jpg`;
-
-    return {
-      content: [
-        {
-          type: "text",
-          text: coverUrl,
-        },
-      ],
-    };
-    // No try/catch needed here as we are just constructing a URL string based on validated input.
-  };
-
   private setupToolHandlers() {
     this.server.setRequestHandler(ListToolsRequestSchema, async () => ({
       tools: [
@@ -509,7 +464,7 @@ class OpenLibraryServer {
         case "get_author_photo":
           return this._handleGetAuthorPhoto(args);
         case "get_book_cover":
-          return this._handleGetBookCover(args);
+          return handleGetBookCover(args);
         default:
           throw new McpError(ErrorCode.MethodNotFound, `Unknown tool: ${name}`);
       }
