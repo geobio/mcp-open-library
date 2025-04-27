@@ -1,7 +1,7 @@
 import { McpError, ErrorCode } from "@modelcontextprotocol/sdk/types.js";
 import { describe, expect, it } from "vitest";
 
-import handleGetBookCover from "./get-book-cover.js";
+import { handleGetBookCover } from "./get-book-cover.js";
 
 describe("handleGetBookCover", () => {
   it("should generate correct URL with ISBN", async () => {

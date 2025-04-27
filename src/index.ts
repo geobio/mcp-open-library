@@ -11,8 +11,11 @@ import {
 import axios from "axios";
 import { z } from "zod";
 
-import handleGetBookByTitle from "./tools/get-book-by-title.js"; // Import the refactored tool handler
-import handleGetBookCover from "./tools/get-book-cover.js"; // Import the new tool handler
+import {
+  handleGetAuthorPhoto,
+  handleGetBookByTitle,
+  handleGetBookCover,
+} from "./tools/index.js";
 import {
   AuthorInfo,
   OpenLibraryAuthorSearchResponse,
@@ -33,15 +36,6 @@ const GetAuthorInfoArgsSchema = z.object({
     }),
 });
 
-// Schema for the get_author_photo tool arguments
-const GetAuthorPhotoArgsSchema = z.object({
-  olid: z
-    .string()
-    .min(1, { message: "OLID cannot be empty" })
-    .regex(/^OL\d+A$/, {
-      message: "OLID must be in the format OL<number>A",
-    }),
-});
 class OpenLibraryServer {
   private server: Server;
   private axiosInstance;
@@ -230,40 +224,6 @@ class OpenLibraryServer {
     }
   };
 
-  // Handler function for the get_author_photo tool
-  private _handleGetAuthorPhoto = async (
-    args: unknown,
-  ): Promise<CallToolResult> => {
-    const parseResult = GetAuthorPhotoArgsSchema.safeParse(args);
-
-    if (!parseResult.success) {
-      const errorMessages = parseResult.error.errors
-        .map((e) => `${e.path.join(".")}: ${e.message}`)
-        .join(", ");
-      throw new McpError(
-        ErrorCode.InvalidParams,
-        `Invalid arguments for get_author_photo: ${errorMessages}`,
-      );
-    }
-
-    const olid = parseResult.data.olid;
-    const photoUrl = `https://covers.openlibrary.org/a/olid/${olid}-L.jpg`; // Use -L for large size
-
-    // Note: We don't actually fetch the image here, just return the URL.
-    // The Open Library Covers API doesn't provide a way to check if an image exists
-    // other than trying to fetch it. We assume the URL is correct if the OLID format is valid.
-
-    return {
-      content: [
-        {
-          type: "text",
-          text: photoUrl,
-        },
-      ],
-    };
-    // No try/catch needed here as we are just constructing a URL string based on validated input.
-  };
-
   private setupToolHandlers() {
     this.server.setRequestHandler(ListToolsRequestSchema, async () => ({
       tools: [
@@ -370,7 +330,7 @@ class OpenLibraryServer {
         case "get_author_info":
           return this._handleGetAuthorInfo(args);
         case "get_author_photo":
-          return this._handleGetAuthorPhoto(args);
+          return handleGetAuthorPhoto(args);
         case "get_book_cover":
           return handleGetBookCover(args);
         default:

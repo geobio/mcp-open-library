@@ -109,4 +109,4 @@ const handleGetBookByTitle = async (
   }
 };
 
-export default handleGetBookByTitle;
+export { handleGetBookByTitle };

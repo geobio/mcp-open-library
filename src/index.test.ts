@@ -663,58 +663,6 @@ describe("OpenLibraryServer", () => {
         );
       }
     });
-
-    it("should handle CallTool request with invalid olid format", async () => {
-      const callToolHandler = mockMcpServer.setRequestHandler.mock.calls.find(
-        (call: [any, (...args: any[]) => Promise<any>]) =>
-          call[0] === CallToolRequestSchema,
-      )?.[1];
-
-      expect(callToolHandler).toBeDefined();
-
-      if (callToolHandler) {
-        const mockRequest = {
-          params: {
-            name: "get_author_photo",
-            arguments: { olid: "invalid-olid" }, // Invalid format
-          },
-        };
-
-        await expect(callToolHandler(mockRequest as any)).rejects.toThrow(
-          new McpError(
-            ErrorCode.InvalidParams,
-            "Invalid arguments for get_author_photo: olid: OLID must be in the format OL<number>A",
-          ),
-        );
-        expect(mockedAxios.get).not.toHaveBeenCalled();
-      }
-    });
-
-    it("should handle CallTool request with missing olid argument", async () => {
-      const callToolHandler = mockMcpServer.setRequestHandler.mock.calls.find(
-        (call: [any, (...args: any[]) => Promise<any>]) =>
-          call[0] === CallToolRequestSchema,
-      )?.[1];
-
-      expect(callToolHandler).toBeDefined();
-
-      if (callToolHandler) {
-        const mockRequest = {
-          params: {
-            name: "get_author_photo",
-            arguments: {}, // Missing olid
-          },
-        };
-
-        await expect(callToolHandler(mockRequest as any)).rejects.toThrow(
-          new McpError(
-            ErrorCode.InvalidParams,
-            "Invalid arguments for get_author_photo: olid: Required",
-          ),
-        );
-        expect(mockedAxios.get).not.toHaveBeenCalled();
-      }
-    });
   });
 
   describe("get_book_cover tool", () => {

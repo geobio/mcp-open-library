@@ -47,4 +47,4 @@ const handleGetBookCover = async (args: unknown): Promise<CallToolResult> => {
   // No try/catch needed here as we are just constructing a URL string based on validated input.
 };
 
-export default handleGetBookCover;
+export { handleGetBookCover };
