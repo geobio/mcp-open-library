@@ -1,5 +1,7 @@
 # MCP Open Library
 
+[![smithery badge](https://smithery.ai/badge/@8enSmith/mcp-open-library)](https://smithery.ai/server/@8enSmith/mcp-open-library)
+
 A Model Context Protocol (MCP) server for the Open Library API that enables AI assistants to search for book and author information.
 
 <a href="https://glama.ai/mcp/servers/@8enSmith/mcp-open-library">
@@ -20,6 +22,15 @@ This project implements an MCP server that provides tools for AI assistants to i
 
 ## Installation
 
+### Installing via Smithery
+
+To install MCP Open Library for Claude Desktop automatically via [Smithery](https://smithery.ai/server/@8enSmith/mcp-open-library):
+
+```bash
+npx -y @smithery/cli install @8enSmith/mcp-open-library --client claude
+```
+
+### Manual Installation
 ```bash
 # Clone the repository
 git clone https://github.com/your-username/mcp-open-library.git
