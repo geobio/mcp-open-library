@@ -15,18 +15,12 @@ import {
   handleGetAuthorPhoto,
   handleGetBookByTitle,
   handleGetBookCover,
+  handleGetAuthorsByName, // Import the new handler
 } from "./tools/index.js";
 import {
-  AuthorInfo,
-  OpenLibraryAuthorSearchResponse,
   DetailedAuthorInfo, // Import the new type
 } from "./types.js";
 
-const GetAuthorsByNameArgsSchema = z.object({
-  name: z.string().min(1, { message: "Author name cannot be empty" }),
-});
-
-// Add schema for the new tool's arguments
 const GetAuthorInfoArgsSchema = z.object({
   author_key: z
     .string()
@@ -65,86 +59,6 @@ class OpenLibraryServer {
       await this.server.close();
       process.exit(0);
     });
-  }
-
-  private async _handleGetAuthorsByName(
-    args: unknown,
-  ): Promise<CallToolResult> {
-    const parseResult = GetAuthorsByNameArgsSchema.safeParse(args);
-
-    if (!parseResult.success) {
-      const errorMessages = parseResult.error.errors
-        .map((e) => `${e.path.join(".")}: ${e.message}`)
-        .join(", ");
-      throw new McpError(
-        ErrorCode.InvalidParams,
-        `Invalid arguments for get_authors_by_name: ${errorMessages}`,
-      );
-    }
-
-    const authorName = parseResult.data.name;
-
-    try {
-      const response =
-        await this.axiosInstance.get<OpenLibraryAuthorSearchResponse>(
-          "/search/authors.json", // Use the author search endpoint
-          {
-            params: { q: authorName }, // Use 'q' parameter for author search
-          },
-        );
-
-      if (
-        !response.data ||
-        !response.data.docs ||
-        response.data.docs.length === 0
-      ) {
-        return {
-          content: [
-            {
-              type: "text",
-              text: `No authors found matching name: "${authorName}"`,
-            },
-          ],
-        };
-      }
-
-      const authorResults: AuthorInfo[] = response.data.docs.map((doc) => ({
-        key: doc.key,
-        name: doc.name,
-        alternate_names: doc.alternate_names,
-        birth_date: doc.birth_date,
-        top_work: doc.top_work,
-        work_count: doc.work_count,
-      }));
-
-      return {
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify(authorResults, null, 2),
-          },
-        ],
-      };
-    } catch (error) {
-      let errorMessage = "Failed to fetch author data from Open Library.";
-      if (axios.isAxiosError(error)) {
-        errorMessage = `Open Library API error: ${
-          error.response?.statusText ?? error.message
-        }`;
-      } else if (error instanceof Error) {
-        errorMessage = `Error processing request: ${error.message}`;
-      }
-      console.error("Error in get_authors_by_name:", error);
-      return {
-        content: [
-          {
-            type: "text",
-            text: errorMessage,
-          },
-        ],
-        isError: true,
-      };
-    }
   }
 
   // Add handler function for the new tool
@@ -272,7 +186,6 @@ class OpenLibraryServer {
           },
         },
         {
-          // Add the new tool definition
           name: "get_author_photo",
           description:
             "Get the URL for an author's photo using their Open Library Author ID (OLID, e.g. OL23919A).",
@@ -289,7 +202,6 @@ class OpenLibraryServer {
           },
         },
         {
-          // Add the get-book-cover tool definition
           name: "get_book_cover",
           description:
             "Get the URL for a book's cover image using a key (ISBN, OCLC, LCCN, OLID, ID) and value.",
@@ -326,7 +238,7 @@ class OpenLibraryServer {
         case "get_book_by_title":
           return handleGetBookByTitle(args, this.axiosInstance);
         case "get_authors_by_name":
-          return this._handleGetAuthorsByName(args);
+          return handleGetAuthorsByName(args, this.axiosInstance);
         case "get_author_info":
           return this._handleGetAuthorInfo(args);
         case "get_author_photo":
