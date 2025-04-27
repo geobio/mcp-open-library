@@ -3,32 +3,19 @@ import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import {
   CallToolRequestSchema,
-  CallToolResult,
   ErrorCode,
   ListToolsRequestSchema,
   McpError,
 } from "@modelcontextprotocol/sdk/types.js";
 import axios from "axios";
-import { z } from "zod";
 
 import {
   handleGetAuthorPhoto,
   handleGetBookByTitle,
   handleGetBookCover,
-  handleGetAuthorsByName, // Import the new handler
+  handleGetAuthorsByName,
+  handleGetAuthorInfo,
 } from "./tools/index.js";
-import {
-  DetailedAuthorInfo, // Import the new type
-} from "./types.js";
-
-const GetAuthorInfoArgsSchema = z.object({
-  author_key: z
-    .string()
-    .min(1, { message: "Author key cannot be empty" })
-    .regex(/^OL\d+A$/, {
-      message: "Author key must be in the format OL<number>A",
-    }),
-});
 
 class OpenLibraryServer {
   private server: Server;
@@ -60,83 +47,6 @@ class OpenLibraryServer {
       process.exit(0);
     });
   }
-
-  // Add handler function for the new tool
-  private _handleGetAuthorInfo = async (
-    args: unknown,
-  ): Promise<CallToolResult> => {
-    const parseResult = GetAuthorInfoArgsSchema.safeParse(args);
-
-    if (!parseResult.success) {
-      const errorMessages = parseResult.error.errors
-        .map((e) => `${e.path.join(".")}: ${e.message}`)
-        .join(", ");
-      throw new McpError(
-        ErrorCode.InvalidParams,
-        `Invalid arguments for get_author_info: ${errorMessages}`,
-      );
-    }
-
-    const authorKey = parseResult.data.author_key;
-
-    try {
-      const response = await this.axiosInstance.get<DetailedAuthorInfo>(
-        `/authors/${authorKey}.json`,
-      );
-
-      if (!response.data) {
-        // Should not happen if API returns 200, but good practice
-        return {
-          content: [
-            {
-              type: "text",
-              text: `No data found for author key: "${authorKey}"`,
-            },
-          ],
-        };
-      }
-
-      // Optionally format the bio if it's an object
-      const authorData = { ...response.data };
-      if (typeof authorData.bio === "object" && authorData.bio !== null) {
-        authorData.bio = authorData.bio.value;
-      }
-
-      return {
-        content: [
-          {
-            type: "text",
-            // Return the full author details as JSON
-            text: JSON.stringify(authorData, null, 2),
-          },
-        ],
-      };
-    } catch (error) {
-      let errorMessage = `Failed to fetch author data for key ${authorKey}.`;
-      if (axios.isAxiosError(error)) {
-        if (error.response?.status === 404) {
-          errorMessage = `Author with key "${authorKey}" not found.`;
-        } else {
-          errorMessage = `Open Library API error: ${
-            error.response?.statusText ?? error.message
-          }`;
-        }
-      } else if (error instanceof Error) {
-        errorMessage = `Error processing request: ${error.message}`;
-      }
-      console.error(`Error in get_author_info (${authorKey}):`, error);
-
-      return {
-        content: [
-          {
-            type: "text",
-            text: errorMessage,
-          },
-        ],
-        isError: true,
-      };
-    }
-  };
 
   private setupToolHandlers() {
     this.server.setRequestHandler(ListToolsRequestSchema, async () => ({
@@ -240,7 +150,7 @@ class OpenLibraryServer {
         case "get_authors_by_name":
           return handleGetAuthorsByName(args, this.axiosInstance);
         case "get_author_info":
-          return this._handleGetAuthorInfo(args);
+          return handleGetAuthorInfo(args, this.axiosInstance);
         case "get_author_photo":
           return handleGetAuthorPhoto(args);
         case "get_book_cover":
