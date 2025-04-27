@@ -1,7 +1,7 @@
 import { ErrorCode, McpError } from "@modelcontextprotocol/sdk/types.js";
 import { describe, it, expect } from "vitest";
 
-import { handleGetAuthorPhoto } from "./get-author-photo.js";
+import { handleGetAuthorPhoto } from "./index.js";
 
 describe("handleGetAuthorPhoto", () => {
   it("should return the correct photo URL for a valid OLID", async () => {

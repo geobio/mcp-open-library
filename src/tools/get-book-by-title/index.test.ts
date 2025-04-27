@@ -1,10 +1,7 @@
 import { McpError } from "@modelcontextprotocol/sdk/types.js";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 
-import {
-  handleGetBookByTitle,
-  GetBookByTitleArgsSchema,
-} from "./get-book-by-title.js";
+import { handleGetBookByTitle, GetBookByTitleArgsSchema } from "./index.js";
 
 // Mock axios
 vi.mock("axios");

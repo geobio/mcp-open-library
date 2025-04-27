@@ -3,13 +3,13 @@ import {
   ErrorCode,
   McpError,
 } from "@modelcontextprotocol/sdk/types.js";
-import axios, { AxiosInstance } from "axios";
+import axios from "axios";
 import { z } from "zod";
 
-import { DetailedAuthorInfo } from "./get-author-info.types.js"; // Update import path
+import { DetailedAuthorInfo } from "./types.js";
 
-// Define the schema for the tool arguments
-const GetAuthorInfoArgsSchema = z.object({
+// Schema for the get_author_info tool arguments
+export const GetAuthorInfoArgsSchema = z.object({
   author_key: z
     .string()
     .min(1, { message: "Author key cannot be empty" })
@@ -18,8 +18,10 @@ const GetAuthorInfoArgsSchema = z.object({
     }),
 });
 
-// Define the handler function using arrow function syntax
-export const handleGetAuthorInfo = async (
+// Type for the Axios instance (can be imported or defined if needed elsewhere)
+type AxiosInstance = ReturnType<typeof axios.create>;
+
+const handleGetAuthorInfo = async (
   args: unknown,
   axiosInstance: AxiosInstance,
 ): Promise<CallToolResult> => {
@@ -96,3 +98,5 @@ export const handleGetAuthorInfo = async (
     };
   }
 };
+
+export { handleGetAuthorInfo };

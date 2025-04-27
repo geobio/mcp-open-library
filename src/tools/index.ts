@@ -1,5 +1,5 @@
-export * from "./get-book-by-title.js";
-export * from "./get-authors-by-name.js";
-export * from "./get-author-photo.js";
-export * from "./get-book-cover.js";
-export * from "./get-author-info.js"; // Export the new handler
+export * from "./get-book-by-title/index.js";
+export * from "./get-authors-by-name/index.js";
+export * from "./get-author-photo/index.js";
+export * from "./get-book-cover/index.js";
+export * from "./get-author-info/index.js";

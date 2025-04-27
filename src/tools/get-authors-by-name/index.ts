@@ -6,10 +6,7 @@ import {
 import axios from "axios";
 import { z } from "zod";
 
-import {
-  AuthorInfo,
-  OpenLibraryAuthorSearchResponse,
-} from "./get-authors-by-name.types.js";
+import { AuthorInfo, OpenLibraryAuthorSearchResponse } from "./types.js";
 
 // Schema for the get_authors_by_name tool arguments
 export const GetAuthorsByNameArgsSchema = z.object({
@@ -54,7 +51,6 @@ const handleGetAuthorsByName = async (
         content: [
           {
             type: "text",
-            // Removed unnecessary escapes
             text: `No authors found matching name: "${authorName}"`,
           },
         ],

@@ -1,16 +1,10 @@
 import { ErrorCode, McpError } from "@modelcontextprotocol/sdk/types.js";
-import {
-  AxiosInstance,
-  AxiosResponse,
-  InternalAxiosRequestConfig,
-  AxiosError,
-  AxiosHeaders,
-  AxiosRequestHeaders,
-} from "axios";
+import { AxiosInstance, AxiosError, AxiosHeaders } from "axios";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-import { handleGetAuthorsByName } from "./get-authors-by-name.js";
-import { OpenLibraryAuthorSearchResponse } from "./get-authors-by-name.types.js";
+import { OpenLibraryAuthorSearchResponse } from "./types.js";
+
+import { handleGetAuthorsByName } from "./index.js";
 
 // Mock axios module
 vi.mock("axios");
@@ -23,8 +17,8 @@ const mockAxiosInstance = {
 const mockedAxiosInstanceGet = vi.mocked(mockAxiosInstance.get);
 
 // Helper to create a minimal valid config
-const createMockConfig = (): InternalAxiosRequestConfig => ({
-  headers: new AxiosHeaders() as AxiosRequestHeaders, // Use AxiosHeaders
+const createMockConfig = () => ({
+  headers: new AxiosHeaders(), // Use AxiosHeaders
   url: "",
   method: "get",
   // Add other minimal required properties if necessary based on Axios types
@@ -57,7 +51,7 @@ describe("handleGetAuthorsByName", () => {
     };
 
     const mockConfig = createMockConfig();
-    const mockAxiosResponse: AxiosResponse<OpenLibraryAuthorSearchResponse> = {
+    const mockAxiosResponse = {
       data: mockApiResponse,
       status: 200,
       statusText: "OK",
@@ -105,7 +99,7 @@ describe("handleGetAuthorsByName", () => {
     };
 
     const mockConfig = createMockConfig();
-    const mockAxiosResponse: AxiosResponse<OpenLibraryAuthorSearchResponse> = {
+    const mockAxiosResponse = {
       data: mockApiResponse,
       status: 200,
       statusText: "OK",
@@ -133,13 +127,14 @@ describe("handleGetAuthorsByName", () => {
   it("should handle Axios errors with response", async () => {
     const mockArgs = { name: "ErrorCase" };
     const mockConfig = createMockConfig();
-    const mockResponse: AxiosResponse = {
+    const mockResponse = {
       data: null,
       status: 500,
       statusText: "Internal Server Error",
       headers: {},
       config: mockConfig,
     };
+
     const axiosError = new AxiosError(
       "Request failed with status code 500",
       "ERR_BAD_RESPONSE",
@@ -168,12 +163,13 @@ describe("handleGetAuthorsByName", () => {
   it("should handle Axios errors without response (e.g., network error)", async () => {
     const mockArgs = { name: "NetworkErrorCase" };
     const mockConfig = createMockConfig();
+
     const axiosError = new AxiosError(
       "Network Error", // Message
       "ECONNREFUSED", // Code
       mockConfig, // Config
       null, // Request
-      undefined, // No response
+      undefined,
     );
 
     mockedAxiosInstanceGet.mockRejectedValue(axiosError);
@@ -188,7 +184,6 @@ describe("handleGetAuthorsByName", () => {
     expect(result.content).toEqual([
       {
         type: "text",
-        // Should use error.message when response is missing
         text: "Failed to fetch author data from Open Library.",
       },
     ]);
@@ -226,6 +221,7 @@ describe("handleGetAuthorsByName", () => {
         "Invalid arguments for get_authors_by_name: name: Author name cannot be empty",
       ),
     );
+
     expect(mockedAxiosInstanceGet).not.toHaveBeenCalled();
   });
 
@@ -240,6 +236,7 @@ describe("handleGetAuthorsByName", () => {
         "Invalid arguments for get_authors_by_name: name: Required",
       ),
     );
+
     expect(mockedAxiosInstanceGet).not.toHaveBeenCalled();
   });
 });

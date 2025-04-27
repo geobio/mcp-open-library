@@ -2,7 +2,7 @@ import { McpError, ErrorCode } from "@modelcontextprotocol/sdk/types.js";
 import { AxiosInstance, AxiosError, AxiosHeaders } from "axios";
 import { describe, it, expect, vi, Mock } from "vitest";
 
-import { handleGetAuthorInfo } from "./get-author-info.js"; // Use .js extension for compiled output
+import { handleGetAuthorInfo } from "./index.js";
 
 // Mock Axios instance
 const mockAxiosInstance = {
@@ -104,7 +104,7 @@ describe("handleGetAuthorInfo", () => {
         status: 404,
         statusText: "Not Found",
         headers: {},
-        config: { headers: new AxiosHeaders() }, // Add AxiosHeaders here
+        config: { headers: new AxiosHeaders() },
         data: {},
       },
     );
@@ -135,7 +135,7 @@ describe("handleGetAuthorInfo", () => {
         status: 500,
         statusText: "Internal Server Error",
         headers: {},
-        config: { headers: new AxiosHeaders() }, // Add AxiosHeaders here
+        config: { headers: new AxiosHeaders() },
         data: {},
       },
     );
