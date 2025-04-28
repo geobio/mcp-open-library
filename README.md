@@ -14,11 +14,11 @@ This project implements an MCP server that provides tools for AI assistants to i
 
 ## Features
 
-- **Book Search by Title**: Search for books using their title and get detailed information
-- **Author Search by Name**: Search for authors using their name and get relevant details
-- **Structured Response Format**: Returns book and author information in a consistent JSON structure
-- **Error Handling**: Proper validation and error reporting
-- **Testing**: Comprehensive test coverage with Vitest
+- **Book Search by Title**: Search for books using their title (`get_book_by_title`).
+- **Author Search by Name**: Search for authors using their name (`get_authors_by_name`).
+- **Get Author Details**: Retrieve detailed information for a specific author using their Open Library key (`get_author_info`).
+- **Get Author Photo**: Get the URL for an author's photo using their Open Library ID (OLID) (`get_author_photo`).
+- **Get Book Cover**: Get the URL for a book's cover image using various identifiers (ISBN, OCLC, LCCN, OLID, ID) (`get_book_cover`).
 
 ## Installation
 
