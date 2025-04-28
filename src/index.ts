@@ -15,6 +15,7 @@ import {
   handleGetBookCover,
   handleGetAuthorsByName,
   handleGetAuthorInfo,
+  handleGetBookById,
 } from "./tools/index.js";
 
 class OpenLibraryServer {
@@ -138,6 +139,27 @@ class OpenLibraryServer {
             required: ["key", "value"],
           },
         },
+        {
+          name: "get_book_by_id",
+          description:
+            "Get detailed information about a book using its identifier (ISBN, LCCN, OCLC, OLID).",
+          inputSchema: {
+            type: "object",
+            properties: {
+              idType: {
+                type: "string",
+                enum: ["isbn", "lccn", "oclc", "olid"],
+                description:
+                  "The type of identifier used (ISBN, LCCN, OCLC, OLID).",
+              },
+              idValue: {
+                type: "string",
+                description: "The value of the identifier.",
+              },
+            },
+            required: ["idType", "idValue"],
+          },
+        },
       ],
     }));
 
@@ -155,6 +177,8 @@ class OpenLibraryServer {
           return handleGetAuthorPhoto(args);
         case "get_book_cover":
           return handleGetBookCover(args);
+        case "get_book_by_id":
+          return handleGetBookById(args, this.axiosInstance);
         default:
           throw new McpError(ErrorCode.MethodNotFound, `Unknown tool: ${name}`);
       }
