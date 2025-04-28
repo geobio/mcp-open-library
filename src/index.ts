@@ -82,7 +82,7 @@ class OpenLibraryServer {
         {
           name: "get_author_info",
           description:
-            "Get detailed information for a specific author using their Open Library Author Key (e.g., OL23919A).",
+            "Get detailed information for a specific author using their Open Library Author Key (e.g. OL23919A).",
           inputSchema: {
             type: "object",
             properties: {
@@ -98,7 +98,7 @@ class OpenLibraryServer {
         {
           name: "get_author_photo",
           description:
-            "Get the URL for an author's photo using their Open Library Author ID (OLID, e.g. OL23919A).",
+            "Get the URL for an author's photo using their Open Library Author ID (OLID e.g. OL23919A).",
           inputSchema: {
             type: "object",
             properties: {
