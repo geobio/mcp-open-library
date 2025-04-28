@@ -6,7 +6,7 @@ import {
 import axios from "axios";
 import { z } from "zod";
 
-import { BookInfo, OpenLibrarySearchResponse } from "../types.js";
+import { BookInfo, OpenLibrarySearchResponse } from "./types.js";
 
 // Schema for the get_book_by_title tool arguments
 export const GetBookByTitleArgsSchema = z.object({
@@ -106,4 +106,4 @@ const handleGetBookByTitle = async (
   }
 };
 
-export default handleGetBookByTitle;
+export { handleGetBookByTitle };

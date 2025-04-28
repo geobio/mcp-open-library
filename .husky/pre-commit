@@ -1,1 +1,2 @@
-npx lint-staged
+npm pkg set scripts.test:precommit="vitest run"
+npx lint-staged && npm run test:precommit
