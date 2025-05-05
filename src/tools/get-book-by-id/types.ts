@@ -1,18 +1,3 @@
-// filepath: /Users/ben-smith/Development/personal/mcp-open-library/src/tools/get-book-by-id/types.ts
-import { z } from "zod";
-
-// Schema for the get_book_by_id tool arguments
-export const GetBookByIdArgsSchema = z.object({
-  idType: z.enum(["isbn", "lccn", "oclc", "olid"], {
-    errorMap: () => ({
-      message: "idType must be one of: isbn, lccn, oclc, olid",
-    }),
-  }),
-  idValue: z.string().min(1, { message: "idValue cannot be empty" }),
-});
-
-// --- Nested types based on the example response --- //
-
 interface OpenLibraryIdentifier {
   isbn_10?: string[];
   isbn_13?: string[];

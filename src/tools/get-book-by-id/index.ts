@@ -5,13 +5,30 @@ import {
   McpError,
 } from "@modelcontextprotocol/sdk/types.js";
 import axios from "axios";
+import { z } from "zod";
 
 import {
   BookDetails,
-  GetBookByIdArgsSchema,
   OpenLibraryBookResponse,
   OpenLibraryRecord, // Import the updated record type
 } from "./types.js";
+
+// filepath: /Users/ben-smith/Development/personal/mcp-open-library/src/tools/get-book-by-id/types.ts
+
+// Schema for the get_book_by_id tool arguments
+const GetBookByIdArgsSchema = z.object({
+  idType: z
+    .string()
+    .transform((val) => val.toLowerCase())
+    .pipe(
+      z.enum(["isbn", "lccn", "oclc", "olid"], {
+        errorMap: () => ({
+          message: "idType must be one of: isbn, lccn, oclc, olid",
+        }),
+      }),
+    ),
+  idValue: z.string().min(1, { message: "idValue cannot be empty" }),
+});
 
 // Type for the Axios instance
 type AxiosInstance = ReturnType<typeof axios.create>;
