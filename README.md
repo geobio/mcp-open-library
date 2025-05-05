@@ -19,6 +19,7 @@ This project implements an MCP server that provides tools for AI assistants to i
 - **Get Author Details**: Retrieve detailed information for a specific author using their Open Library key (`get_author_info`).
 - **Get Author Photo**: Get the URL for an author's photo using their Open Library ID (OLID) (`get_author_photo`).
 - **Get Book Cover**: Get the URL for a book's cover image using various identifiers (ISBN, OCLC, LCCN, OLID, ID) (`get_book_cover`).
+- **Get Book by ID**: Retrieve detailed book information using various identifiers (ISBN, LCCN, OCLC, OLID) (`get_book_by_id`).
 
 ## Installation
 
@@ -66,6 +67,7 @@ This server implements the Model Context Protocol, which means it can be used by
 - `get_author_info`: Get detailed information for a specific author using their Open Library Author Key
 - `get_author_photo`: Get the URL for an author's photo using their Open Library Author ID (OLID)
 - `get_book_cover`: Get the URL for a book's cover image using a specific identifier (ISBN, OCLC, LCCN, OLID, or ID)
+- `get_book_by_id`: Get detailed book information using a specific identifier (ISBN, LCCN, OCLC, or OLID)
 
 **Example `get_book_by_title` input:**
 ```json
@@ -173,6 +175,50 @@ The `get_book_cover` tool accepts the following parameters:
 - `key`: The type of identifier (one of: `ISBN`, `OCLC`, `LCCN`, `OLID`, or `ID`)
 - `value`: The value of the identifier
 - `size`: Optional cover size (`S` for small, `M` for medium, `L` for large, defaults to `L`)
+
+**Example `get_book_by_id` input:**
+```json
+{
+  "idType": "isbn",
+  "idValue": "9780547928227"
+}
+```
+
+**Example `get_book_by_id` output:**
+```json
+{
+  "title": "The Hobbit",
+  "authors": [
+    "J. R. R. Tolkien"
+  ],
+  "publishers": [
+    "Houghton Mifflin Harcourt"
+  ],
+  "publish_date": "October 21, 2012",
+  "number_of_pages": 300,
+  "isbn_13": [
+    "9780547928227"
+  ],
+  "isbn_10": [
+    "054792822X"
+  ],
+  "oclc": [
+    "794607877"
+  ],
+  "olid": [
+    "OL25380781M"
+  ],
+  "open_library_edition_key": "/books/OL25380781M",
+  "open_library_work_key": "/works/OL45883W",
+  "cover_url": "https://covers.openlibrary.org/b/id/8231496-M.jpg",
+  "info_url": "https://openlibrary.org/books/OL25380781M/The_Hobbit",
+  "preview_url": "https://archive.org/details/hobbit00tolkien"
+}
+```
+
+The `get_book_by_id` tool accepts the following parameters:
+- `idType`: The type of identifier (one of: `isbn`, `lccn`, `oclc`, `olid`)
+- `idValue`: The value of the identifier
 
 An example of this tool being used in Claude Desktop can be see here:
 
