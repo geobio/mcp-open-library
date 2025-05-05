@@ -1,4 +1,3 @@
-// filepath: /Users/ben-smith/Development/personal/mcp-open-library/src/tools/get-book-by-id/index.ts
 import {
   CallToolResult,
   ErrorCode,
@@ -12,8 +11,6 @@ import {
   OpenLibraryBookResponse,
   OpenLibraryRecord, // Import the updated record type
 } from "./types.js";
-
-// filepath: /Users/ben-smith/Development/personal/mcp-open-library/src/tools/get-book-by-id/types.ts
 
 // Schema for the get_book_by_id tool arguments
 const GetBookByIdArgsSchema = z.object({
