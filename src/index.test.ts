@@ -63,7 +63,7 @@ describe("OpenLibraryServer", () => {
 
       if (listToolsHandler) {
         const result = await listToolsHandler({} as any); // Call the handler
-        expect(result.tools).toHaveLength(5);
+        expect(result.tools).toHaveLength(6);
         expect(result.tools[0].name).toBe("get_book_by_title");
         expect(result.tools[0].description).toBeDefined();
         expect(result.tools[0].inputSchema).toEqual({
@@ -91,7 +91,7 @@ describe("OpenLibraryServer", () => {
 
       if (listToolsHandler) {
         const result = await listToolsHandler({} as any);
-        expect(result.tools).toHaveLength(5);
+        expect(result.tools).toHaveLength(6);
         const authorTool = result.tools.find(
           (tool: any) => tool.name === "get_authors_by_name",
         );
@@ -176,7 +176,7 @@ describe("OpenLibraryServer", () => {
 
       if (listToolsHandler) {
         const result = await listToolsHandler({} as any);
-        expect(result.tools).toHaveLength(5);
+        expect(result.tools).toHaveLength(6);
         const authorInfoTool = result.tools.find(
           (tool: any) => tool.name === "get_author_info",
         );
@@ -248,7 +248,7 @@ describe("OpenLibraryServer", () => {
 
       if (listToolsHandler) {
         const result = await listToolsHandler({} as any);
-        expect(result.tools).toHaveLength(5);
+        expect(result.tools).toHaveLength(6);
         const authorPhotoTool = result.tools.find(
           (tool: any) => tool.name === "get_author_photo",
         );
