@@ -8,6 +8,8 @@ import {
   McpError,
 } from "@modelcontextprotocol/sdk/types.js";
 import axios from "axios";
+import { fileURLToPath } from 'url';
+import { realpathSync } from 'fs';
 
 import {
   handleGetAuthorPhoto,
@@ -26,7 +28,7 @@ class OpenLibraryServer {
     this.server = new Server(
       {
         name: "open-library-server",
-        version: "0.1.0",
+        version: "0.1.5",
       },
       {
         capabilities: {
@@ -192,9 +194,21 @@ class OpenLibraryServer {
   }
 }
 
-if (process.argv[1] === new URL(import.meta.url).pathname) {
-  const server = new OpenLibraryServer();
-  server.run().catch(console.error);
+// Fix for npx/symlink execution: resolve both paths to handle symlinks properly
+try {
+  const scriptPath = realpathSync(process.argv[1]);
+  const modulePath = realpathSync(fileURLToPath(import.meta.url));
+  
+  if (scriptPath === modulePath) {
+    const server = new OpenLibraryServer();
+    server.run().catch(console.error);
+  }
+} catch (error) {
+  // Fallback to original check if realpath fails
+  if (process.argv[1] === new URL(import.meta.url).pathname) {
+    const server = new OpenLibraryServer();
+    server.run().catch(console.error);
+  }
 }
 
 export { OpenLibraryServer };

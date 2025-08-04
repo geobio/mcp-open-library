@@ -1,14 +1,13 @@
 {
-  "name": "mcp-open-library",
-  "version": "0.1.0",
+  "name": "@geobio/mcp-open-library",
+  "version": "0.1.5",
   "description": "MCP server for the Open Library",
-  "private": true,
+  "private": false,
   "type": "module",
-  "bin": {
-    "open-library-server": "./build/index.js"
-  },
+  "bin": "./bin-wrapper.js",
   "files": [
-    "build"
+    "build",
+    "bin-wrapper.js"
   ],
   "scripts": {
     "build": "tsc && node -e \"require('fs').chmodSync('build/index.js', '755')\"",
